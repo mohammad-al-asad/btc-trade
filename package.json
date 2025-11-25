@@ -9,9 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/client": "^7.0.0",
+    "binance-api-node": "^0.13.2",
+    "lightweight-charts": "^5.0.9",
     "next": "16.0.3",
+    "prisma": "^7.0.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "recharts": "^3.4.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
