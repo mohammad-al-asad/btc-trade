@@ -1,6 +1,6 @@
-import { hashPassword } from '@/src/lib/bcrypt';
-import { prisma } from '@/src/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { hashPassword } from "@/src/lib/bcrypt";
+import { prisma } from "@/src/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!username || !email || !password) {
       return NextResponse.json(
-        { error: 'Username, email, and password are required' },
+        { error: "Username, email, and password are required" },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
+        { error: "Password must be at least 6 characters long" },
         { status: 400 }
       );
     }
@@ -26,21 +26,21 @@ export async function POST(request: NextRequest) {
       where: {
         OR: [
           { email: email.toLowerCase() },
-          { username: username.toLowerCase() }
-        ]
-      }
+          { username: username.toLowerCase() },
+        ],
+      },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email or username already exists' },
+        { error: "User with this email or username already exists" },
         { status: 409 }
       );
     }
 
     // Get client IP address
-    const forwarded = request.headers.get('x-forwarded-for');
-    const networkIP = forwarded ? forwarded.split(',')[0] : 'unknown';
+    const forwarded = request.headers.get("x-forwarded-for");
+    const networkIP = forwarded ? forwarded.split(",")[0] : "unknown";
 
     // Hash password
     const hashedPassword = await hashPassword(password);
@@ -51,33 +51,38 @@ export async function POST(request: NextRequest) {
         username: username.toLowerCase(),
         email: email.toLowerCase(),
         password: hashedPassword,
+        assets: {
+          create: [
+            { amount: 0.0, assetName: "BTC" },
+            { amount: 0.0, assetName: "USDT" },
+          ],
+        },
         whiteList: {
           create: {
             networkIP,
-            deviceName: deviceName || 'Primary Device'
-          }
-        }
+            deviceName: deviceName || "Primary Device",
+          },
+        },
       },
       include: {
-        whiteList: true
-      }
+        whiteList: true,
+      },
     });
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json(
-      { 
-        message: 'User created successfully', 
-        user: userWithoutPassword 
+      {
+        message: "User created successfully",
+        user: userWithoutPassword,
       },
       { status: 201 }
     );
-
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error("Signup error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -2,6 +2,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { RiBtcFill } from "react-icons/ri";
+import { BiMoneyWithdraw } from "react-icons/bi";
+import { RiLuggageDepositLine } from "react-icons/ri";
 
 interface UserData {
   id: string;
@@ -9,97 +13,110 @@ interface UserData {
   email: string;
   balance: number;
   createdAt: string;
-  whiteList: Array<{
+  assets: Array<{
     id: string;
-    networkIP: string;
-    deviceName: string;
-    userAgent?: string;
-    createdAt: string;
-  }>;
-  transactions: Array<{
-    id: string;
-    type: string;
+    assetName: string;
     amount: number;
-    status: string;
-    description?: string;
-    createdAt: string;
+    currentPrice?: number;
+    value?: number;
   }>;
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'overview' | 'balance' | 'devices'>('overview');
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [transactionData, setTransactionData] = useState<any[]>();
   const [loading, setLoading] = useState(true);
-  const [balanceAction, setBalanceAction] = useState<'deposit' | 'withdraw'>('deposit');
-  const [amount, setAmount] = useState('');
-  const [walletAddress, setWalletAddress] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [message, setMessage] = useState('');
+  const [btcPrice, setBtcPrice] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<"assets" | "activity">("assets");
+  const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "BTC">(
+    "USD"
+  );
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === "authenticated") {
       fetchUserData();
+      fetchBtcData();
+      fetchTransactionData();
+    } else if (status === "unauthenticated") {
+      router.push("/auth/signin");
     }
-  }, [status]);
+  }, [status, router]);
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/user');
+      const response = await fetch("/api/user");
       if (response.ok) {
         const data = await response.json();
         setUserData(data);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBalanceAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || parseFloat(amount) <= 0) return;
-
-    setProcessing(true);
-    setMessage('');
-
+  const fetchBtcData = async () => {
     try {
-      const endpoint = balanceAction === 'deposit' 
-        ? '/api/transactions/deposit' 
-        : '/api/transactions/withdraw';
-
-      const body = balanceAction === 'deposit' 
-        ? { amount: parseFloat(amount) }
-        : { amount: parseFloat(amount), walletAddress };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await response.json();
+      const response = await fetch(
+        "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+      );
 
       if (response.ok) {
-        setMessage(`${balanceAction === 'deposit' ? 'Deposit' : 'Withdrawal'} successful!`);
-        setAmount('');
-        setWalletAddress('');
-        fetchUserData(); // Refresh user data
-      } else {
-        setMessage(result.error || `Failed to process ${balanceAction}`);
+        const data = await response.json();
+        setBtcPrice(data.price);
       }
     } catch (error) {
-      setMessage('An error occurred. Please try again.');
+      console.error("Error fetching user data:", error);
     } finally {
-      setProcessing(false);
+      setLoading(false);
     }
   };
 
-  if (status === 'loading' || loading) {
+  const fetchTransactionData = async () => {
+    try {
+      const response = await fetch("api/transactions");
+
+      if (response.ok) {
+        const data = await response.json();
+        setTransactionData(data.transactions);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate total portfolio value in selected currency
+  const calculateTotalPortfolioValue = () => {
+    if (!userData?.assets) return 0;
+    const total =
+      selectedCurrency == "BTC"
+        ? userData?.assets[0].amount
+        : userData?.assets[1].amount;
+    return total;
+  };
+
+  const totalPortfolioValue = calculateTotalPortfolioValue();
+
+  // Format value based on selected currency
+  const formatValue = (value: number) => {
+    if (selectedCurrency === "BTC") {
+      return `₿ ${value.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    return `$ ${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
@@ -107,287 +124,238 @@ export default function ProfilePage() {
     );
   }
 
-  if (status === 'unauthenticated') {
-    router.push('/auth/signin');
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto p-4 max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Profile & Account</h1>
-          <p className="text-gray-400">Manage your account settings and balance</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === 'overview' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setActiveTab('balance')}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === 'balance' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  Balance Management
-                </button>
-                <button
-                  onClick={() => setActiveTab('devices')}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === 'devices' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  Devices
-                </button>
-              </nav>
-            </div>
-
-            {/* Balance Card */}
-            <div className="bg-gray-800 rounded-lg p-4 mt-4">
-              <h3 className="text-lg font-semibold mb-2">Current Balance</h3>
-              <div className="text-2xl font-bold text-green-400">
-                ${userData?.balance?.toFixed(2) || '0.00'}
-              </div>
-              <p className="text-sm text-gray-400 mt-1">Available for trading</p>
+      <div className="container mx-auto p-4 max-w-4xl">
+        {/* User Info Card */}
+        <div className="bg-gray-800 rounded-2xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-right ml-auto">
+              <p className="text-gray-400 text-sm">Member since</p>
+              <p className="text-sm">
+                {userData?.createdAt
+                  ? new Date(userData.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </p>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* User Information */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">User Information</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Username</label>
-                      <p className="text-lg">{userData?.username}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Email</label>
-                      <p className="text-lg">{userData?.email}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Member Since</label>
-                      <p className="text-lg">
-                        {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Account Status</label>
-                      <p className="text-lg text-green-400">Active</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Transactions */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-                  {userData?.transactions && userData.transactions.length > 0 ? (
-                    <div className="space-y-3">
-                      {userData.transactions.map((transaction) => (
-                        <div
-                          key={transaction.id}
-                          className="flex justify-between items-center p-3 bg-gray-700 rounded-lg"
-                        >
-                          <div>
-                            <p className="font-medium capitalize">{transaction.type.toLowerCase()}</p>
-                            <p className="text-sm text-gray-400">
-                              {transaction.description} • {new Date(transaction.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className={transaction.type === 'DEPOSIT' ? 'text-green-400' : 'text-red-400'}>
-                              {transaction.type === 'DEPOSIT' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                            </p>
-                            <p className={`text-xs capitalize ${
-                              transaction.status === 'COMPLETED' ? 'text-green-400' :
-                              transaction.status === 'PENDING' ? 'text-yellow-400' : 'text-red-400'
-                            }`}>
-                              {transaction.status.toLowerCase()}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400">No transactions yet.</p>
-                  )}
-                </div>
+          {/* Balance Section */}
+          <div className="text-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">@{userData?.username}</h2>
+            </div>
+            <p className="text-gray-400 text-sm mb-2">Total Balance</p>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="text-4xl font-bold">
+                {formatValue(totalPortfolioValue)}
               </div>
-            )}
+              <select
+                value={selectedCurrency}
+                onChange={(e) =>
+                  setSelectedCurrency(e.target.value as "USD" | "BTC")
+                }
+                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="USD">USD</option>
+                <option value="BTC">BTC</option>
+              </select>
+            </div>
+          </div>
 
-            {activeTab === 'balance' && (
-              <div className="space-y-6">
-                {/* Balance Actions */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-4">Manage Balance</h2>
-                  
-                  {/* Action Toggle */}
-                  <div className="flex space-x-4 mb-6">
-                    <button
-                      onClick={() => setBalanceAction('deposit')}
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        balanceAction === 'deposit'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      Deposit
-                    </button>
-                    <button
-                      onClick={() => setBalanceAction('withdraw')}
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        balanceAction === 'withdraw'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      Withdraw
-                    </button>
-                  </div>
+          {/* Action Buttons */}
+          <div className="flex space-x-4 justify-center">
+            <Link
+              href="/deposit"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors flex gap-1 items-center"
+            >
+              <RiLuggageDepositLine size={20} />
+              Deposit
+            </Link>
+            <Link
+              href="/withdraw"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors flex gap-1 items-center"
+            >
+              <BiMoneyWithdraw size={20} />
+              Withdraw
+            </Link>
+          </div>
+        </div>
 
-                  {/* Action Form */}
-                  <form onSubmit={handleBalanceAction} className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Amount (USD)
-                      </label>
-                      <input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0.01"
-                        required
-                      />
-                    </div>
+        {/* Tab Navigation */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setActiveTab("assets")}
+            className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+              activeTab === "assets"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+            }`}
+          >
+            My Assets
+          </button>
+          <button
+            onClick={() => setActiveTab("activity")}
+            className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+              activeTab === "activity"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+            }`}
+          >
+            Recent Activity
+          </button>
+        </div>
 
-                    {balanceAction === 'withdraw' && (
-                      <div>
-                        <label className="block text-sm text-gray-400 mb-2">
-                          Wallet Address
-                        </label>
-                        <input
-                          type="text"
-                          value={walletAddress}
-                          onChange={(e) => setWalletAddress(e.target.value)}
-                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter your wallet address"
-                          required
-                        />
-                      </div>
-                    )}
+        {/* Tab Content */}
+        {activeTab === "assets" && (
+          <div className="bg-gray-800 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold mb-4">My Assets</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
+                      Asset
+                    </th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
+                      Value
+                    </th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
+                      Balance
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    key={userData?.assets[0].id}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                  >
+                    <td className="py-4 px-4">
+                      <div className="flex items-center">
+                        <RiBtcFill className="w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center mr-3" />
 
-                    {message && (
-                      <div className={`p-3 rounded-lg ${
-                        message.includes('successful') 
-                          ? 'bg-green-900/50 text-green-200' 
-                          : 'bg-red-900/50 text-red-200'
-                      }`}>
-                        {message}
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={processing}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-                    >
-                      {processing ? 'Processing...' : 
-                       balanceAction === 'deposit' ? 'Deposit Funds' : 'Request Withdrawal'}
-                    </button>
-                  </form>
-                </div>
-
-                {/* Transaction Limits */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">Transaction Limits</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="p-3 bg-gray-700 rounded-lg">
-                      <p className="text-gray-400">Minimum Deposit</p>
-                      <p className="text-white">$10.00</p>
-                    </div>
-                    <div className="p-3 bg-gray-700 rounded-lg">
-                      <p className="text-gray-400">Minimum Withdrawal</p>
-                      <p className="text-white">$10.00</p>
-                    </div>
-                    <div className="p-3 bg-gray-700 rounded-lg">
-                      <p className="text-gray-400">Maximum Deposit</p>
-                      <p className="text-white">$100,000.00</p>
-                    </div>
-                    <div className="p-3 bg-gray-700 rounded-lg">
-                      <p className="text-gray-400">Withdrawal Fee</p>
-                      <p className="text-white">1% (min $1.00)</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'devices' && (
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Whitelisted Devices</h2>
-                <p className="text-gray-400 mb-4">
-                  These are the devices that are authorized to access your account.
-                </p>
-                
-                {userData?.whiteList && userData.whiteList.length > 0 ? (
-                  <div className="space-y-3">
-                    {userData.whiteList.map((device) => (
-                      <div
-                        key={device.id}
-                        className="flex justify-between items-center p-4 bg-gray-700 rounded-lg"
-                      >
                         <div>
-                          <p className="font-medium">{device.deviceName}</p>
-                          <p className="text-sm text-gray-400">
-                            IP: {device.networkIP} • Added: {new Date(device.createdAt).toLocaleDateString()}
+                          <p className="font-medium">
+                            {userData?.assets[0].assetName}
                           </p>
-                          {device.userAgent && (
-                            <p className="text-xs text-gray-500 truncate max-w-md">
-                              {device.userAgent}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="px-2 py-1 bg-green-900 text-green-200 text-xs rounded">
-                            Active
-                          </span>
-                          <button className="text-red-400 hover:text-red-300 text-sm">
-                            Remove
-                          </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">No devices whitelisted.</p>
-                )}
-              </div>
-            )}
+                    </td>
+                    <td className="py-4 px-4">
+                      <p className="font-semibold">{btcPrice}</p>
+                    </td>
+                    <td className="py-4 px-4">
+                      <p className="font-semibold bg-amber-600 w-fit px-2 rounded-sm mb-0.5">
+                        ₿ {userData?.assets[0].amount}
+                      </p>
+                      {userData?.assets[0].amount ? (
+                        <p className="font-semibold bg-green-600 w-fit px-2.5 rounded-sm">
+                          $ {userData?.assets[0].amount * btcPrice!}
+                        </p>
+                      ) : null}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="bg-gray-800 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+            <div className="space-y-3">
+              {/* {transactionData?.map((transaction:any) => (
+                
+              ))} */}
+
+              {/* Sample activity items - replace with real data */}
+              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium">Deposit</p>
+                    <p className="text-sm text-gray-400">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-green-400 font-semibold">+$1,000.00</p>
+                  <p className="text-sm text-gray-400">Completed</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 12H4"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium">Withdraw</p>
+                    <p className="text-sm text-gray-400">1 day ago</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-red-400 font-semibold">-$500.00</p>
+                  <p className="text-sm text-gray-400">Completed</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium">Trade</p>
+                    <p className="text-sm text-gray-400">3 days ago</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-blue-400 font-semibold">BTC Purchase</p>
+                  <p className="text-sm text-gray-400">Completed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

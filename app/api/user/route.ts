@@ -17,13 +17,9 @@ export async function GET(request: NextRequest) {
         id: true,
         username: true,
         email: true,
-        balance: true,
         createdAt: true,
         updatedAt: true,
-        whiteList: {
-          where: { isActive: true },
-          orderBy: { createdAt: "desc" },
-        },
+        assets: true,
         transactions: {
           orderBy: { createdAt: "desc" },
           take: 10, // Last 10 transactions for quick overview
