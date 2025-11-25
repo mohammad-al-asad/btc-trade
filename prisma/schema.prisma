@@ -21,6 +21,7 @@ model User{
   email             String
   password          String
   whiteList         Whitelist[]
+  assets            Asset[]
 }
 // add defaut device information to protect 2nd device login. 
 // add 2nd device information as well if that one permited
@@ -30,4 +31,16 @@ model Whitelist {
   deviceName        String
   userId            String 
   user              User @relation(fields: [userId], references: [id])
+}
+enum AssetName {
+  USDT
+  BTC
+}
+model Asset {
+  id                String @id @default(cuid())
+  amount            Decimal
+  assetName          AssetName @default(USDT)
+  userId            String
+  user              User @relation(fields: [userId], references: [id])
+
 }
