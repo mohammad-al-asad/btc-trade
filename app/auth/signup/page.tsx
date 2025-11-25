@@ -201,7 +201,7 @@ export default function SignUp() {
             <h4 className="text-sm font-medium text-gray-300 mb-2">Security Notice</h4>
             <p className="text-xs text-gray-400">
               Your current device will be automatically whitelisted. For security reasons, 
-              you'll need to manually approve any additional devices from your account settings.
+              you&apos;ll need to manually approve any additional devices from your account settings.
             </p>
           </div>
 

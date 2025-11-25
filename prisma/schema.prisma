@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider  = "prisma-client"
+  output    = "../app/generated/prisma"
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
@@ -14,33 +14,64 @@ datasource db {
   provider = "postgresql"
 }
 
-
-model User{
-  id                String @id @default(cuid())
-  username          String
-  email             String
-  password          String
-  whiteList         Whitelist[]
-  assets            Asset[]
+model User {
+  id           String        @id @default(cuid())
+  username     String
+  email        String
+  password     String
+  whiteList    Whitelist[]
+  assets       Asset[]
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
+
 // add defaut device information to protect 2nd device login. 
 // add 2nd device information as well if that one permited
 model Whitelist {
-  id                String @id @default(cuid())
-  networkIP         String
-  deviceName        String
-  userId            String 
-  user              User @relation(fields: [userId], references: [id])
+  id         String @id @default(cuid())
+  networkIP  String
+  deviceName String
+  userId     String
+  user       User   @relation(fields: [userId], references: [id])
 }
+
 enum AssetName {
   USDT
   BTC
 }
-model Asset {
-  id                String @id @default(cuid())
-  amount            Decimal
-  assetName          AssetName @default(USDT)
-  userId            String
-  user              User @relation(fields: [userId], references: [id])
 
+model Asset {
+  id        String    @id @default(cuid())
+  amount    Decimal
+  assetName AssetName
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  type        TransactionType
+  amount      Float
+  currency    String            @default("USD")
+  status      TransactionStatus @default(PENDING)
+  description String?
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRADE
+  FEE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
