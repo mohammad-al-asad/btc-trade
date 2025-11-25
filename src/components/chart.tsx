@@ -1,9 +1,12 @@
-"use client"
-// pages/trading.js
+"use client";
 import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function TradingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [price, setPrice] = useState(null);
   const [priceHistory, setPriceHistory] = useState([]);
   const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
@@ -15,25 +18,35 @@ export default function TradingPage() {
   const tradeWsRef = useRef(null);
   const depthWsRef = useRef(null);
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
+
   // Fetch initial historical data
   useEffect(() => {
-    fetchHistoricalData();
-  }, [timeframe]);
+    if (status === 'authenticated') {
+      fetchHistoricalData();
+    }
+  }, [timeframe, status]);
 
   // WebSocket connections
   useEffect(() => {
-    setupTradeWebSocket();
-    setupDepthWebSocket();
+    if (status === 'authenticated') {
+      setupTradeWebSocket();
+      setupDepthWebSocket();
 
-    return () => {
-      if (tradeWsRef.current) tradeWsRef.current.close();
-      if (depthWsRef.current) depthWsRef.current.close();
-    };
-  }, []);
+      return () => {
+        if (tradeWsRef.current) tradeWsRef.current.close();
+        if (depthWsRef.current) depthWsRef.current.close();
+      };
+    }
+  }, [status]);
 
   const fetchHistoricalData = async () => {
     try {
-      // Using Binance public API for historical data
       const response = await fetch(
         `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${timeframe}&limit=100`
       );
@@ -68,12 +81,9 @@ export default function TradingPage() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
-        // Update latest price
         const latestPrice = parseFloat(data.p);
         setPrice(latestPrice);
 
-        // Update recent trades
         setRecentTrades(prev => {
           const newTrades = [{
             id: data.t,
@@ -85,14 +95,12 @@ export default function TradingPage() {
           return newTrades;
         });
 
-        // Update price history
         setPriceHistory(prev => {
           if (prev.length === 0) return prev;
           
           const newData = [...prev];
           const lastCandle = newData[newData.length - 1];
           
-          // Update the last candle with new price
           newData[newData.length - 1] = {
             ...lastCandle,
             close: latestPrice,
@@ -102,7 +110,6 @@ export default function TradingPage() {
           
           return newData;
         });
-
       } catch (error) {
         console.error('Error processing trade data:', error);
       }
@@ -116,9 +123,10 @@ export default function TradingPage() {
     ws.onclose = () => {
       console.log('Trade WebSocket disconnected');
       setIsConnected(false);
-      // Reconnect after 3 seconds
       setTimeout(() => {
-        setupTradeWebSocket();
+        if (status === 'authenticated') {
+          setupTradeWebSocket();
+        }
       }, 3000);
     };
 
@@ -136,7 +144,6 @@ export default function TradingPage() {
       try {
         const data = JSON.parse(event.data);
         
-        // Update order book
         setOrderBook({
           bids: data.bids.slice(0, 10).map(bid => ({
             price: parseFloat(bid[0]),
@@ -158,9 +165,10 @@ export default function TradingPage() {
 
     ws.onclose = () => {
       console.log('Depth WebSocket disconnected');
-      // Reconnect after 3 seconds
       setTimeout(() => {
-        setupDepthWebSocket();
+        if (status === 'authenticated') {
+          setupDepthWebSocket();
+        }
       }, 3000);
     };
 
@@ -179,6 +187,10 @@ export default function TradingPage() {
     alert(`Sell order placed: ${quantity} BTC at $${price.toFixed(2)} - Total: $${totalCost.toFixed(2)}`);
   };
 
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/auth/signin' });
+  };
+
   const timeframes = [
     { value: '1m', label: '1m' },
     { value: '5m', label: '5m' },
@@ -188,11 +200,38 @@ export default function TradingPage() {
     { value: '1d', label: '1d' }
   ];
 
+  // Show loading state
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render trading page if not authenticated
+  if (status !== 'authenticated') {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Connection Status */}
-      <div className={`p-2 text-center ${isConnected ? 'bg-green-600' : 'bg-red-600'}`}>
-        {isConnected ? 'Connected to Binance' : 'Disconnected - Reconnecting...'}
+      {/* Connection Status & User Info */}
+      <div className="p-2 text-center bg-gray-800 flex justify-between items-center px-4">
+        <div className={`${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+          {isConnected ? 'Connected to Binance' : 'Disconnected - Reconnecting...'}
+        </div>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-300">
+            Welcome, {session?.user?.name || session?.user?.email}
+          </span>
+          <button
+            onClick={handleSignOut}
+            className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <div className="container mx-auto p-4">
@@ -205,9 +244,8 @@ export default function TradingPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Chart Area - 3/4 width */}
+          {/* Main Chart Area */}
           <div className="lg:col-span-3 bg-gray-800 rounded-lg p-4">
-            {/* Chart Controls */}
             <div className="flex justify-between items-center mb-4">
               <div className="flex space-x-2">
                 {timeframes.map(tf => (
@@ -222,13 +260,8 @@ export default function TradingPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex space-x-2">
-                <button className="px-3 py-1 bg-gray-700 rounded">Indicator</button>
-                <button className="px-3 py-1 bg-gray-700 rounded">Drawing</button>
-              </div>
             </div>
 
-            {/* Price Chart */}
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={priceHistory}>
@@ -251,7 +284,7 @@ export default function TradingPage() {
             </div>
           </div>
 
-          {/* Sidebar - 1/4 width */}
+          {/* Sidebar */}
           <div className="space-y-6">
             {/* Trading Panel */}
             <div className="bg-gray-800 rounded-lg p-4">
@@ -296,7 +329,6 @@ export default function TradingPage() {
               <h3 className="text-lg font-semibold mb-4">Order Book</h3>
               
               <div className="space-y-1 text-xs">
-                {/* Asks */}
                 {orderBook.asks.map((ask, index) => (
                   <div key={index} className="flex justify-between text-red-400">
                     <span>{ask.price.toFixed(2)}</span>
@@ -304,7 +336,6 @@ export default function TradingPage() {
                   </div>
                 ))}
                 
-                {/* Spread */}
                 <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
                   Spread: {orderBook.bids.length > 0 && orderBook.asks.length > 0 
                     ? ((orderBook.asks[0].price - orderBook.bids[0].price) / orderBook.bids[0].price * 100).toFixed(4) + '%'
@@ -312,7 +343,6 @@ export default function TradingPage() {
                   }
                 </div>
                 
-                {/* Bids */}
                 {orderBook.bids.map((bid, index) => (
                   <div key={index} className="flex justify-between text-green-400">
                     <span>{bid.price.toFixed(2)}</span>
