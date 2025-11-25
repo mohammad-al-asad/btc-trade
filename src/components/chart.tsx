@@ -1,49 +1,137 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+// pages/trading.js
+import { useState, useEffect, useRef } from "react";
+
+// Import the library correctly
+import { createChart } from "lightweight-charts";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 export default function TradingPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const [price, setPrice] = useState(null);
-  const [priceHistory, setPriceHistory] = useState([]);
-  const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
-  const [recentTrades, setRecentTrades] = useState([]);
-  const [timeframe, setTimeframe] = useState('1m');
-  const [quantity, setQuantity] = useState('0.001');
+  // const router = useRouter();
+  const [price, setPrice] = useState<number | null>(null);
+  const [candleData, setCandleData] = useState<any[]>([]);
+  const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({
+    bids: [],
+    asks: [],
+  });
+  const [recentTrades, setRecentTrades] = useState<any[]>([]);
+  const [timeframe, setTimeframe] = useState("1d");
+  const [quantity, setQuantity] = useState("0.001");
   const [isConnected, setIsConnected] = useState(false);
-  
-  const tradeWsRef = useRef(null);
-  const depthWsRef = useRef(null);
+  const [selectedTab, setSelectedTab] = useState("Chart");
+  const [indicators, setIndicators] = useState({
+    ma25: 2.0771,
+    ma99: 2.6543,
+  });
+  const [previousPrice, setPreviousPrice] = useState<number | null>(null);
 
-  // Redirect if not authenticated
+  const chartContainerRef = useRef<any>(null);
+  const chartRef = useRef<any>(null);
+  const candleSeriesRef = useRef<any>(null);
+  // const volumeSeriesRef = useRef<any>(null);
+  const tradeWsRef = useRef<any>(null);
+  const klineWsRef = useRef<any>(null);
+  const depthWsRef = useRef<any>(null);
+
+  // Initialize chart
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (chartContainerRef.current && !chartRef.current) {
+      const chart: any = createChart(chartContainerRef.current, {
+        layout: {
+          background: { color: "#1e293b" },
+          textColor: "#d1d5db",
+        },
+        grid: {
+          vertLines: { color: "#374151" },
+          horzLines: { color: "#374151" },
+        },
+        width: chartContainerRef.current.clientWidth,
+        height: 400,
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      // Create candlestick series - CORRECT API
+      const candleSeries = chart?.addCandlestickSeries({
+        upColor: "#26a69a",
+        downColor: "#ef5350",
+        borderVisible: false,
+        wickUpColor: "#26a69a",
+        wickDownColor: "#ef5350",
+      });
+
+      // Create volume series
+      // const volumeSeries = chart.addHistogramSeries({
+      //   color: "#26a69a",
+      //   priceFormat: {
+      //     type: "volume",
+      //   },
+      //   priceScaleId: "",
+      //   scaleMargins: {
+      //     top: 0.8,
+      //     bottom: 0,
+      //   },
+      // });
+
+      chartRef.current = chart;
+      candleSeriesRef.current = candleSeries;
+      // volumeSeriesRef.current = volumeSeries;
+
+      // Handle window resize
+      const handleResize = () => {
+        if (chartContainerRef.current && chartRef.current) {
+          chartRef.current.applyOptions({
+            width: chartContainerRef.current.clientWidth,
+          });
+        }
+      };
+
+      window.addEventListener("resize", handleResize);
+
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        if (chartRef.current) {
+          chartRef.current.remove();
+        }
+      };
     }
-  }, [status, router]);
+  }, []);
+
+  // Update chart data when candleData changes
+  useEffect(() => {
+    if (candleSeriesRef.current && candleData.length > 0) {
+      candleSeriesRef.current.setData(candleData);
+    }
+    if (candleData.length > 50) {
+      chartRef.current?.timeScale().setVisibleRange({
+        from: candleData[candleData.length - 50].time,
+        to: candleData[candleData.length - 1].time,
+      });
+    }
+  }, [candleData]);
 
   // Fetch initial historical data
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchHistoricalData();
-    }
-  }, [timeframe, status]);
+    fetchHistoricalData();
+  }, [timeframe]);
 
   // WebSocket connections
   useEffect(() => {
-    if (status === 'authenticated') {
-      setupTradeWebSocket();
-      setupDepthWebSocket();
+    setupTradeWebSocket();
+    setupKlineWebSocket();
+    setupDepthWebSocket();
 
-      return () => {
-        if (tradeWsRef.current) tradeWsRef.current.close();
-        if (depthWsRef.current) depthWsRef.current.close();
-      };
-    }
-  }, [status]);
+    return () => {
+      if (tradeWsRef.current) tradeWsRef.current.close();
+      if (klineWsRef.current) klineWsRef.current.close();
+      if (depthWsRef.current) depthWsRef.current.close();
+    };
+  }, [timeframe]);
 
   const fetchHistoricalData = async () => {
     try {
@@ -51,30 +139,55 @@ export default function TradingPage() {
         `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${timeframe}&limit=100`
       );
       const data = await response.json();
-      
-      const formattedData = data.map(candle => ({
-        time: new Date(candle[0]).toLocaleTimeString(),
+
+      const formattedCandles = data.map((candle: any) => ({
+        time: Math.floor(candle[0] / 1000), // Convert to seconds
         open: parseFloat(candle[1]),
         high: parseFloat(candle[2]),
         low: parseFloat(candle[3]),
         close: parseFloat(candle[4]),
-        volume: parseFloat(candle[5])
       }));
-      
-      setPriceHistory(formattedData);
-      if (formattedData.length > 0) {
-        setPrice(formattedData[formattedData.length - 1].close);
+
+      // const formattedVolume = data.map((candle: any) => ({
+      //   time: Math.floor(candle[0] / 1000),
+      //   value: parseFloat(candle[5]),
+      //   color:
+      //     parseFloat(candle[4]) >= parseFloat(candle[1])
+      //       ? "#26a69a"
+      //       : "#ef5350",
+      // }));
+
+      setCandleData(formattedCandles);
+
+      // if (volumeSeriesRef.current) {
+      //   volumeSeriesRef.current.setData(formattedVolume);
+      // }
+
+      if (formattedCandles.length > 0) {
+        const lastCandle = formattedCandles[formattedCandles.length - 1];
+        setPrice(lastCandle.close);
       }
+
+      // Calculate mock indicators
+      const closes = formattedCandles.map((candle: any) => candle.close);
+      const avgClose =
+        closes.reduce((sum: number, close: any) => sum + close, 0) /
+        closes.length;
+
+      setIndicators({
+        ma25: avgClose,
+        ma99: avgClose * 1.2,
+      });
     } catch (error) {
-      console.error('Error fetching historical data:', error);
+      console.error("Error fetching historical data:", error);
     }
   };
 
   const setupTradeWebSocket = () => {
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-    
+    const ws = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+
     ws.onopen = () => {
-      console.log('Trade WebSocket connected');
+      console.log("Trade WebSocket connected");
       setIsConnected(true);
     };
 
@@ -82,94 +195,126 @@ export default function TradingPage() {
       try {
         const data = JSON.parse(event.data);
         const latestPrice = parseFloat(data.p);
-        setPrice(latestPrice);
 
-        setRecentTrades(prev => {
-          const newTrades = [{
-            id: data.t,
-            price: latestPrice,
-            quantity: parseFloat(data.q),
-            time: new Date(data.T).toLocaleTimeString(),
-            isBuyerMaker: data.m
-          }, ...prev.slice(0, 9)];
+        setPrice((prev) => {
+          setPreviousPrice(prev);
+          return latestPrice;
+        });
+
+        setRecentTrades((prev) => {
+          const newTrades = [
+            {
+              id: data.t,
+              price: latestPrice,
+              quantity: parseFloat(data.q),
+              time: new Date(data.T).toLocaleTimeString(),
+              isBuyerMaker: data.m,
+            },
+            ...prev.slice(0, 9),
+          ];
           return newTrades;
         });
-
-        setPriceHistory(prev => {
-          if (prev.length === 0) return prev;
-          
-          const newData = [...prev];
-          const lastCandle = newData[newData.length - 1];
-          
-          newData[newData.length - 1] = {
-            ...lastCandle,
-            close: latestPrice,
-            high: Math.max(lastCandle.high, latestPrice),
-            low: Math.min(lastCandle.low, latestPrice)
-          };
-          
-          return newData;
-        });
       } catch (error) {
-        console.error('Error processing trade data:', error);
+        console.error("Error processing trade data:", error);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('Trade WebSocket error:', error);
+      console.error("Trade WebSocket error:", error);
       setIsConnected(false);
     };
 
     ws.onclose = () => {
-      console.log('Trade WebSocket disconnected');
+      console.log("Trade WebSocket disconnected");
       setIsConnected(false);
-      setTimeout(() => {
-        if (status === 'authenticated') {
-          setupTradeWebSocket();
-        }
-      }, 3000);
+      setTimeout(() => setupTradeWebSocket(), 3000);
     };
 
     tradeWsRef.current = ws;
   };
 
-  const setupDepthWebSocket = () => {
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms');
-    
-    ws.onopen = () => {
-      console.log('Depth WebSocket connected');
-    };
+  const setupKlineWebSocket = () => {
+    const interval =
+      timeframe === "1d"
+        ? "1d"
+        : timeframe === "4h"
+        ? "4h"
+        : timeframe === "1h"
+        ? "1h"
+        : timeframe === "15m"
+        ? "15m"
+        : "1m";
+
+    const ws = new WebSocket(
+      `wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`
+    );
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
-        setOrderBook({
-          bids: data.bids.slice(0, 10).map(bid => ({
-            price: parseFloat(bid[0]),
-            quantity: parseFloat(bid[1])
-          })),
-          asks: data.asks.slice(0, 10).map(ask => ({
-            price: parseFloat(ask[0]),
-            quantity: parseFloat(ask[1])
-          }))
-        });
+        const kline = data.k;
+
+        if (kline.x) {
+          // If candle is closed
+          const newCandle = {
+            time: Math.floor(kline.t / 1000),
+            open: parseFloat(kline.o),
+            high: parseFloat(kline.h),
+            low: parseFloat(kline.l),
+            close: parseFloat(kline.c),
+          };
+
+          setCandleData((prev) => {
+            const newData = [...prev.slice(1), newCandle];
+            return newData;
+          });
+        } else {
+          // Update current candle
+          const updatingCandle = {
+            time: Math.floor(kline.t / 1000),
+            open: parseFloat(kline.o),
+            high: parseFloat(kline.h),
+            low: parseFloat(kline.l),
+            close: parseFloat(kline.c),
+          };
+
+          // Update the last candle in the series
+          setCandleData((prev) => {
+            if (prev.length === 0) return [updatingCandle];
+            const newData = [...prev.slice(0, -1), updatingCandle];
+            return newData;
+          });
+        }
       } catch (error) {
-        console.error('Error processing depth data:', error);
+        console.error("Error processing kline data:", error);
       }
     };
 
-    ws.onerror = (error) => {
-      console.error('Depth WebSocket error:', error);
-    };
+    klineWsRef.current = ws;
+  };
 
-    ws.onclose = () => {
-      console.log('Depth WebSocket disconnected');
-      setTimeout(() => {
-        if (status === 'authenticated') {
-          setupDepthWebSocket();
-        }
-      }, 3000);
+  const setupDepthWebSocket = () => {
+    const ws = new WebSocket(
+      "wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms"
+    );
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        setOrderBook({
+          bids: data.bids.slice(0, 10).map((bid: any) => ({
+            price: parseFloat(bid[0]),
+            quantity: parseFloat(bid[1]),
+          })),
+          asks: data.asks.slice(0, 10).map((ask: any) => ({
+            price: parseFloat(ask[0]),
+            quantity: parseFloat(ask[1]),
+          })),
+        });
+      } catch (error) {
+        console.error("Error processing depth data:", error);
+      }
     };
 
     depthWsRef.current = ws;
@@ -178,148 +323,249 @@ export default function TradingPage() {
   const handleBuy = () => {
     if (!price || !quantity) return;
     const totalCost = price * parseFloat(quantity);
-    alert(`Buy order placed: ${quantity} BTC at $${price.toFixed(2)} - Total: $${totalCost.toFixed(2)}`);
+    alert(
+      `Buy order placed: ${quantity} BTC at $${price.toFixed(
+        2
+      )} - Total: $${totalCost.toFixed(2)}`
+    );
   };
 
   const handleSell = () => {
     if (!price || !quantity) return;
     const totalCost = price * parseFloat(quantity);
-    alert(`Sell order placed: ${quantity} BTC at $${price.toFixed(2)} - Total: $${totalCost.toFixed(2)}`);
-  };
-
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/auth/signin' });
+    alert(
+      `Sell order placed: ${quantity} BTC at $${price.toFixed(
+        2
+      )} - Total: $${totalCost.toFixed(2)}`
+    );
   };
 
   const timeframes = [
-    { value: '1m', label: '1m' },
-    { value: '5m', label: '5m' },
-    { value: '15m', label: '15m' },
-    { value: '1h', label: '1h' },
-    { value: '4h', label: '4h' },
-    { value: '1d', label: '1d' }
+    { value: "1m", label: "1m" },
+    { value: "5m", label: "5m" },
+    { value: "15m", label: "15m" },
+    { value: "1h", label: "1h" },
+    { value: "4h", label: "4h" },
+    { value: "1d", label: "1D" },
   ];
 
-  // Show loading state
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
+  const tabs = ["Chart", "Info"];
 
-  // Don't render trading page if not authenticated
-  if (status !== 'authenticated') {
-    return null;
-  }
+  const getPriceChange = () => {
+    if (candleData.length < 2) return { change: 0, percent: 0 };
+    const current = candleData[candleData.length - 1].close;
+    const previous = candleData[candleData.length - 2].close;
+    const change = current - previous;
+    const percent = (change / previous) * 100;
+    return { change, percent };
+  };
+
+  const priceChange = getPriceChange();
+
+  // Format time for display
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleTimeString();
+  };
+
+  useEffect(() => {
+    console.log({ price });
+    console.log({ previousPrice });
+  }, [price, previousPrice]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Connection Status & User Info */}
-      <div className="p-2 text-center bg-gray-800 flex justify-between items-center px-4">
-        <div className={`${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-          {isConnected ? 'Connected to Binance' : 'Disconnected - Reconnecting...'}
-        </div>
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-300">
-            Welcome, {session?.user?.name || session?.user?.email}
-          </span>
-          <button
-            onClick={handleSignOut}
-            className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors"
-          >
-            Sign Out
-          </button>
-        </div>
+      {/* Connection Status */}
+      <div
+        className={`p-1 text-center text-xs ${
+          isConnected ? "bg-green-600" : "bg-red-600"
+        }`}
+      >
+        {isConnected
+          ? "Connected to Binance"
+          : "Disconnected - Reconnecting..."}
+      </div>
+      <div className="flex items-center space-x-4">
+        <span className="text-sm text-gray-300">
+          Welcome, {session?.user?.name || session?.user?.email}
+        </span>
+        <button
+          onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+          className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors"
+        >
+          Sign Out
+        </button>
       </div>
 
-      <div className="container mx-auto p-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">BTC/USDT Trading</h1>
-          <div className="text-2xl font-mono">
-            {price ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Loading...'}
+      <div className="container mx-auto p-2">
+        {/* Top Navigation Tabs */}
+        <div className="flex border-b border-gray-600 mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setSelectedTab(tab)}
+              className={`px-4 py-2 font-medium ${
+                selectedTab === tab
+                  ? "text-blue-400 border-b-2 border-blue-400"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Chart Header */}
+        <div className="flex flex-wrap justify-between items-center mb-2">
+          <div className="flex items-start space-x-4">
+            <div>
+              <h1 className="text-xl font-bold">BTC/USDT</h1>
+              <div className="text-sm text-gray-400">
+                {timeframe.toUpperCase()} · Binance
+              </div>
+            </div>
+            <div>
+              {price && (
+                <div
+                  style={{
+                    color: `${
+                      price! > previousPrice!
+                        ? "#2ebd85"
+                        : price! < previousPrice!
+                        ? "#f6465d"
+                        : "#2ebd85"
+                    }`,
+                  }}
+                  className={`text-xl font-semibold `}
+                >
+                  $
+                  {price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="text-sm">
+              <div className="flex space-x-4">
+                <span>
+                  O{" "}
+                  {candleData.length > 0
+                    ? candleData[candleData.length - 1].open.toFixed(4)
+                    : "0.0000"}
+                </span>
+                <span>
+                  H{" "}
+                  {candleData.length > 0
+                    ? candleData[candleData.length - 1].high.toFixed(4)
+                    : "0.0000"}
+                </span>
+                <span>
+                  L{" "}
+                  {candleData.length > 0
+                    ? candleData[candleData.length - 1].low.toFixed(4)
+                    : "0.0000"}
+                </span>
+                <span>C {price ? price.toFixed(4) : "0.0000"}</span>
+              </div>
+              <div
+                className={`font-semibold ${
+                  priceChange.change >= 0 ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {priceChange.change >= 0 ? "+" : ""}
+                {priceChange.change.toFixed(4)} (
+                {priceChange.percent >= 0 ? "+" : ""}
+                {priceChange.percent.toFixed(2)}%)
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Timeframe Buttons */}
+            <div className="flex bg-gray-800 rounded p-1">
+              {timeframes.map((tf) => (
+                <button
+                  key={tf.value}
+                  onClick={() => setTimeframe(tf.value)}
+                  className={`px-2 py-1 text-xs rounded ${
+                    timeframe === tf.value ? "bg-gray-600" : "hover:bg-gray-700"
+                  }`}
+                >
+                  {tf.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chart Controls */}
+            <button className="p-1 hover:bg-gray-700 rounded">☐</button>
+            <button className="p-1 hover:bg-gray-700 rounded">O</button>
+            <select className="bg-gray-800 rounded px-2 py-1 text-xs">
+              <option>Original</option>
+              <option>Trading View</option>
+              <option>Depth</option>
+            </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Chart Area */}
-          <div className="lg:col-span-3 bg-gray-800 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex space-x-2">
-                {timeframes.map(tf => (
-                  <button
-                    key={tf.value}
-                    onClick={() => setTimeframe(tf.value)}
-                    className={`px-3 py-1 rounded ${
-                      timeframe === tf.value ? 'bg-blue-600' : 'bg-gray-700'
-                    }`}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* Indicators */}
+        <div className="flex space-x-4 text-xs text-gray-400 mb-2">
+          <div>
+            MA 25 close 0{" "}
+            <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+          </div>
+          <div>
+            MA 99 close 0{" "}
+            <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+          </div>
+        </div>
 
-            <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={priceHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                  <XAxis dataKey="time" stroke="#888" />
-                  <YAxis stroke="#888" domain={['auto', 'auto']} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1f2937', border: 'none' }}
-                    labelStyle={{ color: '#fff' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="close"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Main Chart Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Chart - 3/4 width */}
+          <div className="lg:col-span-3 bg-gray-800 rounded-lg p-4">
+            <div ref={chartContainerRef} className="w-full h-[96]" />
+
+            {/* Volume */}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+          {/* Sidebar - 1/4 width */}
+          <div className="space-y-4">
             {/* Trading Panel */}
             <div className="bg-gray-800 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-4">Trade</h3>
-              
+
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Quantity (BTC)</label>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Quantity (BTC)
+                  </label>
                   <input
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full bg-gray-700 rounded px-3 py-2 text-white"
+                    className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm"
                     step="0.001"
                     min="0.001"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={handleBuy}
-                    className="bg-green-600 hover:bg-green-700 rounded py-3 font-semibold transition-colors"
+                    className="bg-green-600 hover:bg-green-700 rounded py-2 font-semibold transition-colors text-sm"
                   >
                     BUY
                   </button>
                   <button
                     onClick={handleSell}
-                    className="bg-red-600 hover:bg-red-700 rounded py-3 font-semibold transition-colors"
+                    className="bg-red-600 hover:bg-red-700 rounded py-2 font-semibold transition-colors text-sm"
                   >
                     SELL
                   </button>
                 </div>
-                
+
                 <div className="text-sm text-gray-400 text-center">
-                  Est. Cost: ${price ? (price * parseFloat(quantity)).toFixed(2) : '0.00'}
+                  Est. Cost: $
+                  {price ? (price * parseFloat(quantity)).toFixed(2) : "0.00"}
                 </div>
               </div>
             </div>
@@ -327,26 +573,39 @@ export default function TradingPage() {
             {/* Order Book */}
             <div className="bg-gray-800 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-4">Order Book</h3>
-              
+
               <div className="space-y-1 text-xs">
-                {orderBook.asks.map((ask, index) => (
-                  <div key={index} className="flex justify-between text-red-400">
+                {/* Asks */}
+                {orderBook.asks.map((ask: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex justify-between text-red-400"
+                  >
                     <span>{ask.price.toFixed(2)}</span>
-                    <span>{ask.quantity.toFixed(4)}</span>
+                    <span>{ask.quantity.toFixed(6)}</span>
                   </div>
                 ))}
-                
+
+                {/* Spread */}
                 <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
-                  Spread: {orderBook.bids.length > 0 && orderBook.asks.length > 0 
-                    ? ((orderBook.asks[0].price - orderBook.bids[0].price) / orderBook.bids[0].price * 100).toFixed(4) + '%'
-                    : '0%'
-                  }
+                  Spread:{" "}
+                  {orderBook.bids.length > 0 && orderBook.asks.length > 0
+                    ? (
+                        ((orderBook.asks[0].price - orderBook.bids[0].price) /
+                          orderBook.bids[0].price) *
+                        100
+                      ).toFixed(4) + "%"
+                    : "0%"}
                 </div>
-                
-                {orderBook.bids.map((bid, index) => (
-                  <div key={index} className="flex justify-between text-green-400">
+
+                {/* Bids */}
+                {orderBook.bids.map((bid: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex justify-between text-green-400"
+                  >
                     <span>{bid.price.toFixed(2)}</span>
-                    <span>{bid.quantity.toFixed(4)}</span>
+                    <span>{bid.quantity.toFixed(6)}</span>
                   </div>
                 ))}
               </div>
@@ -355,19 +614,21 @@ export default function TradingPage() {
             {/* Recent Trades */}
             <div className="bg-gray-800 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-4">Recent Trades</h3>
-              
-              <div className="space-y-1 max-h-40 overflow-y-auto">
+
+              <div className="space-y-1 max-h-40 overflow-y-auto text-xs">
                 {recentTrades.map((trade, index) => (
-                  <div key={trade.id || index} className="flex justify-between text-sm">
-                    <span className={trade.isBuyerMaker ? 'text-red-400' : 'text-green-400'}>
+                  <div key={trade.id || index} className="flex justify-between">
+                    <span
+                      className={
+                        trade.isBuyerMaker ? "text-red-400" : "text-green-400"
+                      }
+                    >
                       {trade.price.toFixed(2)}
                     </span>
                     <span className="text-gray-400">
-                      {trade.quantity.toFixed(4)}
+                      {trade.quantity.toFixed(6)}
                     </span>
-                    <span className="text-gray-500 text-xs">
-                      {trade.time}
-                    </span>
+                    <span className="text-gray-500">{trade.time}</span>
                   </div>
                 ))}
               </div>
@@ -375,24 +636,9 @@ export default function TradingPage() {
           </div>
         </div>
 
-        {/* Additional Trading Info */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-gray-400 text-sm">24h Change</div>
-            <div className="text-green-400 text-lg">+2.5%</div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-gray-400 text-sm">24h High</div>
-            <div className="text-white text-lg">$45,678</div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-gray-400 text-sm">24h Low</div>
-            <div className="text-white text-lg">$43,210</div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-gray-400 text-sm">24h Volume</div>
-            <div className="text-white text-lg">25.5K BTC</div>
-          </div>
+        {/* Footer Info */}
+        <div className="mt-4 text-xs text-gray-400 text-center">
+          {new Date().toLocaleTimeString()} UTC
         </div>
       </div>
     </div>
