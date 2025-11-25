@@ -33,7 +33,7 @@ export const POST = async (req: NextRequest) => {
         (asset) => asset.assetName == AssetName.BTC
       );
 
-      if (Decimal(price / amount) > btcAsset!.amount) {
+      if (Decimal(amount / price) > btcAsset!.amount) {
         return NextResponse.json({ message: "BTC Mismatch" });
       }
       await prisma.$transaction([
@@ -43,7 +43,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              decrement: price / amount,
+              decrement: amount / price,
             },
           },
         }),
@@ -89,7 +89,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              increment: price / amount,
+              increment: amount / price,
             },
           },
         }),
