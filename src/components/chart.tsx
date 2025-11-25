@@ -7,6 +7,9 @@ import { useState, useEffect, useRef } from "react";
 import { createChart } from "lightweight-charts";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import TradePanel from "./trade";
+import Header from "./header";
+import BitcoinInfo from "./info";
 
 export default function TradingPage() {
   const { data: session, status } = useSession();
@@ -31,17 +34,20 @@ export default function TradingPage() {
   const chartContainerRef = useRef<any>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
-  // const volumeSeriesRef = useRef<any>(null);
+  const volumeChartContainerRef = useRef<any>(null);
+  const volumeChartRef = useRef<any>(null);
+  const volumeSeriesRef = useRef<any>(null);
   const tradeWsRef = useRef<any>(null);
   const klineWsRef = useRef<any>(null);
   const depthWsRef = useRef<any>(null);
 
   // Initialize chart
   useEffect(() => {
-    if (chartContainerRef.current && !chartRef.current) {
-      const chart: any = createChart(chartContainerRef.current, {
+    if (!chartRef.current && chartContainerRef.current) {
+      // MAIN CHART
+      const chart = createChart(chartContainerRef.current, {
         layout: {
-          background: { color: "#1e293b" },
+          background: { color: "#0000" },
           textColor: "#d1d5db",
         },
         grid: {
@@ -56,8 +62,7 @@ export default function TradingPage() {
         },
       });
 
-      // Create candlestick series - CORRECT API
-      const candleSeries = chart?.addCandlestickSeries({
+      const candleSeries = chart.addCandlestickSeries({
         upColor: "#26a69a",
         downColor: "#ef5350",
         borderVisible: false,
@@ -65,39 +70,67 @@ export default function TradingPage() {
         wickDownColor: "#ef5350",
       });
 
-      // Create volume series
-      // const volumeSeries = chart.addHistogramSeries({
-      //   color: "#26a69a",
-      //   priceFormat: {
-      //     type: "volume",
-      //   },
-      //   priceScaleId: "",
-      //   scaleMargins: {
-      //     top: 0.8,
-      //     bottom: 0,
-      //   },
-      // });
-
       chartRef.current = chart;
       candleSeriesRef.current = candleSeries;
-      // volumeSeriesRef.current = volumeSeries;
 
-      // Handle window resize
-      const handleResize = () => {
-        if (chartContainerRef.current && chartRef.current) {
-          chartRef.current.applyOptions({
+      // ------------------------------------
+      // ✔ CREATE VOLUME CHART AFTER MAIN CHART EXISTS
+      // ------------------------------------
+      if (volumeChartContainerRef.current) {
+        const volumeChart = createChart(volumeChartContainerRef.current, {
+          layout: {
+            background: { color: "#0000" },
+            textColor: "#d1d5db",
+          },
+          grid: {
+            vertLines: { color: "#374151" },
+            horzLines: { color: "#374151" },
+          },
+          width: volumeChartContainerRef.current.clientWidth,
+          height: 120,
+          timeScale: {
+            timeVisible: true,
+            secondsVisible: false,
+          },
+        });
+
+        const volumeSeries = volumeChart.addHistogramSeries({
+          priceFormat: { type: "volume" },
+          priceScaleId: "",
+          scaleMargins: { top: 0.1, bottom: 0 },
+        });
+
+        volumeChartRef.current = volumeChart;
+        volumeSeriesRef.current = volumeSeries;
+
+        // ✔ sync scroll
+        chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+          try {
+            volumeChart.timeScale().setVisibleRange(range);
+          } catch {}
+        });
+      }
+
+      // Resize
+      const resize = () => {
+        if (chartContainerRef.current) {
+          chart.applyOptions({
             width: chartContainerRef.current.clientWidth,
+          });
+        }
+        if (volumeChartContainerRef.current) {
+          volumeChartRef.current?.applyOptions({
+            width: volumeChartContainerRef.current.clientWidth,
           });
         }
       };
 
-      window.addEventListener("resize", handleResize);
+      window.addEventListener("resize", resize);
 
       return () => {
-        window.removeEventListener("resize", handleResize);
-        if (chartRef.current) {
-          chartRef.current.remove();
-        }
+        window.removeEventListener("resize", resize);
+        chart.remove();
+        volumeChartRef.current?.remove();
       };
     }
   }, []);
@@ -147,6 +180,17 @@ export default function TradingPage() {
         low: parseFloat(candle[3]),
         close: parseFloat(candle[4]),
       }));
+      const formattedVolume = data.map((candle: any) => ({
+        time: Math.floor(candle[0] / 1000),
+        value: parseFloat(candle[5]),
+        color:
+          parseFloat(candle[4]) >= parseFloat(candle[1])
+            ? "#26a69a"
+            : "#ef5350",
+      }));
+      if (volumeSeriesRef.current) {
+        volumeSeriesRef.current.setData(formattedVolume);
+      }
 
       // const formattedVolume = data.map((candle: any) => ({
       //   time: Math.floor(candle[0] / 1000),
@@ -320,26 +364,6 @@ export default function TradingPage() {
     depthWsRef.current = ws;
   };
 
-  const handleBuy = () => {
-    if (!price || !quantity) return;
-    const totalCost = price * parseFloat(quantity);
-    alert(
-      `Buy order placed: ${quantity} BTC at $${price.toFixed(
-        2
-      )} - Total: $${totalCost.toFixed(2)}`
-    );
-  };
-
-  const handleSell = () => {
-    if (!price || !quantity) return;
-    const totalCost = price * parseFloat(quantity);
-    alert(
-      `Sell order placed: ${quantity} BTC at $${price.toFixed(
-        2
-      )} - Total: $${totalCost.toFixed(2)}`
-    );
-  };
-
   const timeframes = [
     { value: "1m", label: "1m" },
     { value: "5m", label: "5m" },
@@ -384,17 +408,7 @@ export default function TradingPage() {
           ? "Connected to Binance"
           : "Disconnected - Reconnecting..."}
       </div>
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-300">
-          Welcome, {session?.user?.name || session?.user?.email}
-        </span>
-        <button
-          onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-          className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors"
-        >
-          Sign Out
-        </button>
-      </div>
+      <Header />
 
       <div className="container mx-auto p-2">
         {/* Top Navigation Tabs */}
@@ -414,205 +428,182 @@ export default function TradingPage() {
           ))}
         </div>
 
-        {/* Chart Header */}
-        <div className="flex flex-wrap justify-between items-center mb-2">
-          <div className="flex items-start space-x-4">
-            <div>
-              <h1 className="text-xl font-bold">BTC/USDT</h1>
-              <div className="text-sm text-gray-400">
-                {timeframe.toUpperCase()} · Binance
-              </div>
-            </div>
-            <div>
-              {price && (
-                <div
-                  style={{
-                    color: `${
-                      price! > previousPrice!
-                        ? "#2ebd85"
-                        : price! < previousPrice!
-                        ? "#f6465d"
-                        : "#2ebd85"
-                    }`,
-                  }}
-                  className={`text-xl font-semibold `}
-                >
-                  $
-                  {price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="text-sm">
-              <div className="flex space-x-4">
-                <span>
-                  O{" "}
-                  {candleData.length > 0
-                    ? candleData[candleData.length - 1].open.toFixed(4)
-                    : "0.0000"}
-                </span>
-                <span>
-                  H{" "}
-                  {candleData.length > 0
-                    ? candleData[candleData.length - 1].high.toFixed(4)
-                    : "0.0000"}
-                </span>
-                <span>
-                  L{" "}
-                  {candleData.length > 0
-                    ? candleData[candleData.length - 1].low.toFixed(4)
-                    : "0.0000"}
-                </span>
-                <span>C {price ? price.toFixed(4) : "0.0000"}</span>
-              </div>
-              <div
-                className={`font-semibold ${
-                  priceChange.change >= 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {priceChange.change >= 0 ? "+" : ""}
-                {priceChange.change.toFixed(4)} (
-                {priceChange.percent >= 0 ? "+" : ""}
-                {priceChange.percent.toFixed(2)}%)
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {/* Timeframe Buttons */}
-            <div className="flex bg-gray-800 rounded p-1">
-              {timeframes.map((tf) => (
-                <button
-                  key={tf.value}
-                  onClick={() => setTimeframe(tf.value)}
-                  className={`px-2 py-1 text-xs rounded ${
-                    timeframe === tf.value ? "bg-gray-600" : "hover:bg-gray-700"
-                  }`}
-                >
-                  {tf.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Chart Controls */}
-            <button className="p-1 hover:bg-gray-700 rounded">☐</button>
-            <button className="p-1 hover:bg-gray-700 rounded">O</button>
-            <select className="bg-gray-800 rounded px-2 py-1 text-xs">
-              <option>Original</option>
-              <option>Trading View</option>
-              <option>Depth</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Indicators */}
-        <div className="flex space-x-4 text-xs text-gray-400 mb-2">
+        {selectedTab == "Chart" && (
           <div>
-            MA 25 close 0{" "}
-            <span className="text-white">{indicators.ma25.toFixed(4)}</span>
-          </div>
-          <div>
-            MA 99 close 0{" "}
-            <span className="text-white">{indicators.ma99.toFixed(4)}</span>
-          </div>
-        </div>
-
-        {/* Main Chart Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Chart - 3/4 width */}
-          <div className="lg:col-span-3 bg-gray-800 rounded-lg p-4">
-            <div ref={chartContainerRef} className="w-full h-[96]" />
-
-            {/* Volume */}
-          </div>
-
-          {/* Sidebar - 1/4 width */}
-          <div className="space-y-4">
-            {/* Trading Panel */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold mb-4">Trade</h3>
-
-              <div className="space-y-3">
+            {/* Chart Header */}
+            <div className="flex flex-wrap justify-between items-center mb-2">
+              <div className="flex items-start space-x-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Quantity (BTC)
-                  </label>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm"
-                    step="0.001"
-                    min="0.001"
-                  />
+                  <h1 className="text-xl font-bold">BTC/USDT</h1>
+                  <div className="text-sm text-gray-400">
+                    {timeframe.toUpperCase()} · Binance
+                  </div>
+                </div>
+                <div>
+                  {price && (
+                    <div
+                      style={{
+                        color: `${
+                          price! > previousPrice!
+                            ? "#2ebd85"
+                            : price! < previousPrice!
+                            ? "#f6465d"
+                            : "#2ebd85"
+                        }`,
+                      }}
+                      className={`text-xl font-semibold `}
+                    >
+                      $
+                      {price.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div className="text-sm">
+                  <div className="flex space-x-4">
+                    <span>
+                      O{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1].open.toFixed(4)
+                        : "0.0000"}
+                    </span>
+                    <span>
+                      H{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1].high.toFixed(4)
+                        : "0.0000"}
+                    </span>
+                    <span>
+                      L{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1].low.toFixed(4)
+                        : "0.0000"}
+                    </span>
+                    <span>C {price ? price.toFixed(4) : "0.0000"}</span>
+                  </div>
+                  <div
+                    className={`font-semibold ${
+                      priceChange.change >= 0
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {priceChange.change >= 0 ? "+" : ""}
+                    {priceChange.change.toFixed(4)} (
+                    {priceChange.percent >= 0 ? "+" : ""}
+                    {priceChange.percent.toFixed(2)}%)
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {/* Timeframe Buttons */}
+                <div className="flex bg-gray-800 rounded p-1">
+                  {timeframes.map((tf) => (
+                    <button
+                      key={tf.value}
+                      onClick={() => setTimeframe(tf.value)}
+                      className={`px-2 py-1 text-xs rounded ${
+                        timeframe === tf.value
+                          ? "bg-gray-600"
+                          : "hover:bg-gray-700"
+                      }`}
+                    >
+                      {tf.label}
+                    </button>
+                  ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleBuy}
-                    className="bg-green-600 hover:bg-green-700 rounded py-2 font-semibold transition-colors text-sm"
-                  >
-                    BUY
-                  </button>
-                  <button
-                    onClick={handleSell}
-                    className="bg-red-600 hover:bg-red-700 rounded py-2 font-semibold transition-colors text-sm"
-                  >
-                    SELL
-                  </button>
-                </div>
-
-                <div className="text-sm text-gray-400 text-center">
-                  Est. Cost: $
-                  {price ? (price * parseFloat(quantity)).toFixed(2) : "0.00"}
-                </div>
+                {/* Chart Controls */}
+                <button className="p-1 hover:bg-gray-700 rounded">☐</button>
+                <button className="p-1 hover:bg-gray-700 rounded">O</button>
+                <select className="bg-gray-800 rounded px-2 py-1 text-xs">
+                  <option>Trading View</option>
+                </select>
               </div>
             </div>
 
-            {/* Order Book */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold mb-4">Order Book</h3>
-
-              <div className="space-y-1 text-xs">
-                {/* Asks */}
-                {orderBook.asks.map((ask: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex justify-between text-red-400"
-                  >
-                    <span>{ask.price.toFixed(2)}</span>
-                    <span>{ask.quantity.toFixed(6)}</span>
-                  </div>
-                ))}
-
-                {/* Spread */}
-                <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
-                  Spread:{" "}
-                  {orderBook.bids.length > 0 && orderBook.asks.length > 0
-                    ? (
-                        ((orderBook.asks[0].price - orderBook.bids[0].price) /
-                          orderBook.bids[0].price) *
-                        100
-                      ).toFixed(4) + "%"
-                    : "0%"}
-                </div>
-
-                {/* Bids */}
-                {orderBook.bids.map((bid: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex justify-between text-green-400"
-                  >
-                    <span>{bid.price.toFixed(2)}</span>
-                    <span>{bid.quantity.toFixed(6)}</span>
-                  </div>
-                ))}
+            {/* Indicators */}
+            <div className="flex space-x-4 text-xs text-gray-400 mb-2">
+              <div>
+                MA 25 close 0{" "}
+                <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+              </div>
+              <div>
+                MA 99 close 0{" "}
+                <span className="text-white">{indicators.ma99.toFixed(4)}</span>
               </div>
             </div>
 
-            {/* Recent Trades */}
-            <div className="bg-gray-800 rounded-lg p-4">
+            {/* Main Chart Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Chart - 3/4 width */}
+              <div className="lg:col-span-3  rounded-lg p-4">
+                <div
+                  ref={chartContainerRef}
+                  className="w-full border-2 border-gray-700 bg-gray-800 "
+                />
+                {/* GPT - add a new chart just show volume */}
+                <div
+                  ref={volumeChartContainerRef}
+                  className="w-full h-40 border-2 border-gray-700 bg-gray-800 mt-2"
+                />
+
+                <div className="mt-4 text-xs text-gray-400 text-center">
+                  {new Date().toLocaleTimeString()} UTC
+                </div>
+              </div>
+
+              {/* Sidebar - 1/4 width */}
+              <div className="space-y-4">
+                {/* Trading Panel */}
+                <TradePanel price={Number(price)} />
+
+                {/* Order Book */}
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Order Book</h3>
+
+                  <div className="space-y-1 text-xs">
+                    {/* Asks */}
+                    {orderBook.asks.map((ask: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex justify-between text-red-400"
+                      >
+                        <span>{ask.price.toFixed(2)}</span>
+                        <span>{ask.quantity.toFixed(6)}</span>
+                      </div>
+                    ))}
+
+                    {/* Spread */}
+                    <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
+                      Spread:{" "}
+                      {orderBook.bids.length > 0 && orderBook.asks.length > 0
+                        ? (
+                            ((orderBook.asks[0].price -
+                              orderBook.bids[0].price) /
+                              orderBook.bids[0].price) *
+                            100
+                          ).toFixed(4) + "%"
+                        : "0%"}
+                    </div>
+
+                    {/* Bids */}
+                    {orderBook.bids.map((bid: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex justify-between text-green-400"
+                      >
+                        <span>{bid.price.toFixed(2)}</span>
+                        <span>{bid.quantity.toFixed(6)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent Trades */}
+                {/* <div className="bg-gray-800 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-4">Recent Trades</h3>
 
               <div className="space-y-1 max-h-40 overflow-y-auto text-xs">
@@ -632,14 +623,12 @@ export default function TradingPage() {
                   </div>
                 ))}
               </div>
+            </div> */}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer Info */}
-        <div className="mt-4 text-xs text-gray-400 text-center">
-          {new Date().toLocaleTimeString()} UTC
-        </div>
+        )}
+        {selectedTab == "Info" && <BitcoinInfo />}
       </div>
     </div>
   );
