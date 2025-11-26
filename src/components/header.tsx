@@ -3,7 +3,7 @@ import React from "react";
 import { useCurrentUser } from "../lib/hook";
 import Link from "next/link";
 import Image from "next/image";
-
+import { FaUser } from "react-icons/fa";
 import logo from "../../public/logo.png";
 import { signOut } from "next-auth/react";
 
@@ -22,7 +22,12 @@ const Header = () => {
       </div>
       <span className="text-sm text-gray-300"></span>
       {!user && <AuthButton />}
-      {user && <Logout />}
+      <div className="flex gap-2 lg:gap-4 items-center">
+        {user && <Logout />}
+        {user && <Link href="/profile">
+          <FaUser className="w-4 h-4 " />
+        </Link>}
+      </div>
     </header>
   );
 };

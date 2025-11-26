@@ -21,12 +21,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    const { amount, token, tradeAction } = await req.json();
-
-    const response = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${token}USDT`
-    );
-    const price = (await response.json()).price;
+    const { amount, token, tradeAction, price } = await req.json();
 
     if (tradeAction == "SELL") {
       const btcAsset = userAssets.find(
@@ -34,7 +29,7 @@ export const POST = async (req: NextRequest) => {
       );
 
       if (Decimal(amount / price) > btcAsset!.amount) {
-        return NextResponse.json({ message: "BTC Mismatch" });
+        return NextResponse.json({ error: "BTC Mismatch" }, { status: 400 });
       }
       await prisma.$transaction([
         prisma.asset.update({
@@ -54,7 +49,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              increment: amount * price,
+              increment: amount,
             },
           },
         }),
@@ -66,10 +61,7 @@ export const POST = async (req: NextRequest) => {
         (asset) => asset.assetName == AssetName.USDT
       );
       if (amount > usdtAsset!.amount) {
-        return NextResponse.json(
-          { message: "Not enogh token" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Not enogh token" }, { status: 400 });
       }
       await prisma.$transaction([
         prisma.asset.update({
@@ -98,6 +90,7 @@ export const POST = async (req: NextRequest) => {
 
     return NextResponse.json({ payload: { price } }, { status: 200 });
   } catch (error) {
+    console.log({ error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
