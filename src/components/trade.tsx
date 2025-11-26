@@ -5,7 +5,8 @@ import { getUserAssets } from "../lib/queries";
 import { AiFillPlusCircle } from "react-icons/ai";
 import { useCurrentUser } from "../lib/hook";
 import { useRouter } from "next/navigation";
-
+import Link from "next/link";
+import { SnackbarProvider, useSnackbar } from "notistack";
 const TradePanel = ({ price }: { price: number }) => {
   const [quantity, setQuantity] = useState<any>(1);
 
@@ -14,9 +15,11 @@ const TradePanel = ({ price }: { price: number }) => {
     queryFn: getUserAssets,
     refetchInterval: 1000, // auto-refresh every 1 sec
   });
-
   const user = useCurrentUser();
   const router = useRouter();
+
+  const { enqueueSnackbar } = useSnackbar();
+
   const trade = async (tradeType: string) => {
     if (!user) {
       router.push("/auth/signin");
@@ -30,8 +33,16 @@ const TradePanel = ({ price }: { price: number }) => {
         amount: quantity,
         token: "BTC",
         tradeAction: tradeType,
+        price: price,
       }),
     });
+    const data = await response.json();
+    if (data?.error) {
+      enqueueSnackbar(data.error, { variant: "error" });
+    }
+    if (data?.payload) {
+      enqueueSnackbar("Order Created", { variant: "success" });
+    }
   };
 
   return (
@@ -53,7 +64,10 @@ const TradePanel = ({ price }: { price: number }) => {
           />
         </div>
         {user && data && (
-          <AssetLabels usdt={data.payload.usdt} btc={data.payload.btc} />
+          <AssetLabels
+            usdt={data.payload.usdt.amount}
+            btc={data.payload.btc.amount}
+          />
         )}
 
         <div className="grid grid-cols-2 gap-2">
@@ -72,8 +86,7 @@ const TradePanel = ({ price }: { price: number }) => {
         </div>
 
         <div className="text-sm text-gray-400 text-center">
-          Est. Cost: $
-          {price ? (price * parseFloat(quantity)).toFixed(2) : "0.00"}
+          Est. BTC: ₿{quantity / price || 0}
         </div>
       </div>
     </div>
@@ -84,18 +97,20 @@ export default TradePanel;
 
 const AssetLabels = ({ usdt, btc }: { usdt: number; btc: number }) => {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 sticky bottom-0">
       <div className="flex justify-between items-center">
         <span className="text-xs text-gray-300">Avbl (USDT)</span>
         {/* <span>{data.payload.usdt}</span> */}
         <span className="text-xs text-white font-medium flex gap-1">
           ${usdt}
-          <AiFillPlusCircle />
+          <Link href="/deposit">
+            <AiFillPlusCircle className="text-green-500" />
+          </Link>
         </span>
       </div>
       <div className="flex justify-between items-center">
         <span className="text-xs text-gray-300">Avbl (BTC)</span>
-        <span className="text-xs text-white font-medium">{btc}</span>
+        <span className="text-xs text-white font-medium">₿{btc}</span>
         {/* <span>{data.payload.btc}</span> */}
       </div>
     </div>
