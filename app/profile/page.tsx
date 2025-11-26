@@ -6,7 +6,7 @@ import Link from "next/link";
 import { RiBtcFill } from "react-icons/ri";
 import { BiMoneyWithdraw } from "react-icons/bi";
 import { RiLuggageDepositLine } from "react-icons/ri";
-
+import { IoLogOut } from "react-icons/io5";
 interface UserData {
   id: string;
   username: string;
@@ -49,6 +49,7 @@ export default function ProfilePage() {
       const response = await fetch("/api/user");
       if (response.ok) {
         const data = await response.json();
+        console.log({data})
         setUserData(data);
       }
     } catch (error) {
@@ -118,18 +119,25 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className=" min-h-screen bg-gray-900 flex items-center justify-center px-2 lg:px-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto p-4 max-w-4xl">
+    <div className="min-h-screen relative bg-[#080808] text-white">
+      <div
+        className="
+      top-0 left-0 absolute"
+      >
+        <img src="grow.png" alt="" className="select-none w-[380px]" />
+      </div>
+
+      <div className="container mx-auto  max-w-4xl relative">
         {/* User Info Card */}
-        <div className="bg-gray-800 rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className=" rounded-2xl py-6 mb-6 bg-transparent backdrop-blur-2xl">
+          {/* <div className="flex items-center justify-between mb-6">
             <div className="text-right ml-auto">
               <p className="text-gray-400 text-sm">Member since</p>
               <p className="text-sm">
@@ -138,68 +146,88 @@ export default function ProfilePage() {
                   : "N/A"}
               </p>
             </div>
-          </div>
+          </div> */}
 
-          {/* Balance Section */}
-          <div className="text-center mb-6">
-            <div>
-              <h2 className="text-xl font-semibold">@{userData?.username}</h2>
-            </div>
-            <p className="text-gray-400 text-sm mb-2">Total Balance</p>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="text-4xl font-bold">
-                {formatValue(totalPortfolioValue)}
+          <div className="py-5 md:py-7 flex items-center justify-between px-6">
+            <div className="flex items-center gap-4 lg:gap-6">
+              <img
+                src="https://avatar.iran.liara.run/public/boy?username=Ash"
+                alt=""
+                className="w-[70px] lg:w-[80px] rounded-full"
+              />
+              <div>
+                <span className="text-sm lg:text-base text-[#788094]">
+                  {userData?.email}
+                </span>
+                <br />
+                <span className="text-2xl lg:text-3xl text-white font-bold">
+                  {userData?.username}
+                </span>
               </div>
-              <select
-                value={selectedCurrency}
-                onChange={(e) =>
-                  setSelectedCurrency(e.target.value as "USD" | "BTC")
-                }
-                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="USD">USD</option>
-                <option value="BTC">BTC</option>
-              </select>
+            </div>
+            <div>
+              <button className="bg-[rgb(25,25,25)] border cursor-pointer border-[rgb(39,39,39)] p-4 lg:p-6 rounded-full">
+                <IoLogOut className="w-6 h-6 text-white" />
+              </button>
+            </div>
+          </div>
+          {/* Balance Section */}
+          <div className=" w-[90%] my-3 mx-auto rounded-2xl  p-5 py-8 lg:p-4 mb-6 bg-[rgba(25,25,25,0.45)] border cursor-pointer border-[rgb(39,39,39)] backdrop-blur-3xl text-left">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[#788094] text-2xl  font-medium">
+                  Current Balance
+                </span>
+                <h2 className="text-4xl text-white ">
+                  {formatValue(totalPortfolioValue)}
+                </h2>
+              </div>
+              <div>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) =>
+                    setSelectedCurrency(e.target.value as "USD" | "BTC")
+                  }
+                  className="bg-[rgba(25,25,25,0.24)] border border-[rgb(39,39,39)] rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="USD">USD</option>
+                  <option value="BTC">BTC</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex space-x-4 justify-center">
-            <Link
-              href="/deposit"
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors flex gap-1 items-center"
-            >
-              <RiLuggageDepositLine size={20} />
-              Deposit
+            <Link href="/deposit" className="flex flex-col text-center">
+              <div className="bg-[rgb(25,25,25)] border cursor-pointer border-[rgb(39,39,39)] text-white font-semibold flex justify-center items-center rounded-full transition-colors  w-20 h-20">
+                <RiLuggageDepositLine className="w-7  h-7" />
+              </div>
+              <span className="text-base text-white">Deposit</span>
             </Link>
-            <Link
-              href="/withdraw"
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors flex gap-1 items-center"
-            >
-              <BiMoneyWithdraw size={20} />
-              Withdraw
+            <Link href="/withdraw" className="flex flex-col text-center">
+              <div className="bg-[rgb(25,25,25)] border cursor-pointer border-[rgb(39,39,39)] w-20 h-20 font-semibold  rounded-full transition-colors flex justify-center items-center ">
+                <BiMoneyWithdraw className="w-7  h-7" />
+              </div>
+              <span className="text-base text-white">Withdraw</span>
             </Link>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-4 mb-6">
+        <div className="flex space-x-4 ">
           <button
             onClick={() => setActiveTab("assets")}
-            className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-              activeTab === "assets"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className={`px-6 py-3 text-lg font-semibold rounded-xl transition-colors ${
+              activeTab === "assets" ? " text-white" : " text-gray-300 "
             }`}
           >
             My Assets
           </button>
           <button
             onClick={() => setActiveTab("activity")}
-            className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-              activeTab === "activity"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className={`px-6 py-3 text-lg font-semibold  rounded-xl font-medium transition-colors ${
+              activeTab === "activity" ? " text-white" : " text-gray-300 "
             }`}
           >
             Recent Activity
@@ -208,151 +236,83 @@ export default function ProfilePage() {
 
         {/* Tab Content */}
         {activeTab === "assets" && (
-          <div className="bg-gray-800 rounded-2xl p-6">
-            <h3 className="text-lg font-semibold mb-4">My Assets</h3>
+          <div className=" rounded-2xl p-6">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
-                      Asset
-                    </th>
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
-                      Value
-                    </th>
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">
-                      Balance
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    key={userData?.assets[0].id}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
-                  >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center">
-                        <RiBtcFill className="w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center mr-3" />
+              <div className="w-full bg-[rgb(25,25,25)] border border-[rgb(36,36,36)] rounded-2xl flex items-center justify-between py-4 px-4">
+                {/* Left Asset Part */}
+                <div className="flex items-center">
+                  <img
+                    src="./bitcoin.png"
+                    alt="bitcoin"
+                    className="select-none"
+                  />
 
-                        <div>
-                          <p className="font-medium">
-                            {userData?.assets[0].assetName}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="font-semibold">{btcPrice}</p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="font-semibold bg-amber-600 w-fit px-2 rounded-sm mb-0.5">
-                        ₿ {userData?.assets[0].amount}
-                      </p>
-                      {userData?.assets[0].amount ? (
-                        <p className="font-semibold bg-green-600 w-fit px-2.5 rounded-sm">
-                          $ {userData?.assets[0].amount * btcPrice!}
-                        </p>
-                      ) : null}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                  <div className="ml-2">
+                    <p className="text-xl font-semibold">BitCoin</p>
+                    <p className="text-sm">${btcPrice}</p>
+                  </div>
+                </div>
+
+                {/* Right Value / Balance Part */}
+                <div className="text-right">
+                  <p className="font-semibold px-2 rounded-sm mb-0.5">
+                    ₿ {Number(userData?.assets[0].amount).toFixed(10)}
+                  </p>
+
+                  {userData?.assets[0].amount ? (
+                    <p className="px-2.5 rounded-sm text-green-600">
+                      $ {userData?.assets[0].amount * btcPrice}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === "activity" && (
-          <div className="bg-gray-800 rounded-2xl p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          <div className=" rounded-2xl p-6">
             <div className="space-y-3">
               {/* {transactionData?.map((transaction:any) => (
                 
               ))} */}
+              <div className="w-full bg-[rgb(25,25,25)] border border-[rgb(36,36,36)] rounded-2xl flex items-center  py-4 px-4">
+                {/* Left Asset Part */}
+                <div className="flex items-center">
+                  <img
+                    src="./withdraw.png"
+                    alt="bitcoin"
+                    className="select-none"
+                  />
+                </div>
+
+                <div className="ml-3">
+                  <p className="text-xl font-semibold">Withdraw Successfull</p>
+                  <p className="text-sm text-[#788094]">
+                    You have withdraw $8000 to your account
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full bg-[rgb(25,25,25)] border border-[rgb(36,36,36)] rounded-2xl flex items-center  py-4 px-4">
+                {/* Left Asset Part */}
+                <div className="flex items-center">
+                  <img
+                    src="./deposit.png"
+                    alt="bitcoin"
+                    className="select-none"
+                  />
+                </div>
+
+                <div className="ml-3">
+                  <p className="text-xl font-semibold">Deposit Successfull</p>
+                  <p className="text-sm text-[#788094]">
+                    You have deposited $8000 to your account
+                  </p>
+                </div>
+              </div>
 
               {/* Sample activity items - replace with real data */}
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium">Deposit</p>
-                    <p className="text-sm text-gray-400">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-green-400 font-semibold">+$1,000.00</p>
-                  <p className="text-sm text-gray-400">Completed</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 12H4"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium">Withdraw</p>
-                    <p className="text-sm text-gray-400">1 day ago</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-red-400 font-semibold">-$500.00</p>
-                  <p className="text-sm text-gray-400">Completed</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium">Trade</p>
-                    <p className="text-sm text-gray-400">3 days ago</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-blue-400 font-semibold">BTC Purchase</p>
-                  <p className="text-sm text-gray-400">Completed</p>
-                </div>
-              </div>
             </div>
           </div>
         )}

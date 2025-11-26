@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
+import { MdContentCopy } from "react-icons/md";
+import { PageHeader } from "@/src/components/simple-page-header";
 export default function DepositPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -54,10 +55,45 @@ export default function DepositPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto p-4 max-w-md">
+    <div className="min-h-screen bg-[#080808] text-white">
+      <PageHeader label="Deposit" />
+      <div className="container mx-auto py-20 p-4 max-w-md">
+        <div >
+          <img
+            src="https://cdn.vectorstock.com/i/1000v/17/88/qr-code-with-bitcoin-sign-symbol-for-internet-vector-29001788.jpg"
+            alt="Bitcoin qr"
+            className="w-[200px] mx-auto rounded-xl "
+          />
+
+          <div className="mt-6">
+            <span className="text-gray-400 text-xs">Network</span>
+            <br />
+            <span className="text-white font-semibold text-sm">BTC</span>
+            <br />
+            <span className="text-gray-400 text-xs">Bitcoin</span>
+          </div>
+
+          <h4 className="text-sm font-semibold text-white mt-5 mb-2">
+            Deposit Address
+          </h4>
+          <div className="bg-[rgb(25,25,25)] border cursor-pointer border-[rgb(39,39,39)] rounded-3xl py-5 px-4 relative mb-5">
+            <span className="text-sm text-white">
+              1Gx9FCknxSsLfFDzFdn75Xgqx95sDp38ir
+            </span>
+            <button className="top-1/2 -translate-y-1/2 right-5 absolute ">
+              <MdContentCopy className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center py-20">
+          <button className="text-sm font-semibold  block text-center cursor-pointer bg-blue-600 w-full rounded-xl py-3 text-white">
+            Tranasiction
+          </button>
+        </div>
+
         {/* Deposit Form */}
-        <div className="bg-gray-800 rounded-2xl p-6">
+        {/* <div className="bg-gray-800 rounded-2xl p-6">
           <form onSubmit={handleDeposit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -114,7 +150,7 @@ export default function DepositPage() {
               {processing ? "Processing..." : "Request Deposit"}
             </button>
           </form>
-        </div>
+        </div> */}
       </div>
     </div>
   );

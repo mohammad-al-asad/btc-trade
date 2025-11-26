@@ -391,10 +391,7 @@ export default function TradingPage() {
     return new Date(timestamp * 1000).toLocaleTimeString();
   };
 
-  useEffect(() => {
-    console.log({ price });
-    console.log({ previousPrice });
-  }, [price, previousPrice]);
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
