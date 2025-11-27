@@ -79,7 +79,7 @@ export default function SignIn() {
         </form>
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/auth/signup"
               className="font-medium text-blue-400 hover:text-blue-300"
@@ -93,9 +93,9 @@ export default function SignIn() {
           <p className="text-sm text-gray-300 text-center">
             Demo credentials:
             <br />
-            Email: demo@trading.com
+            Email: ma@ma.ma
             <br />
-            Password: demo123
+            Password: maasad11
           </p>
         </div>
       </div>

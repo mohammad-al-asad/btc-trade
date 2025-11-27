@@ -21,12 +21,14 @@ const Header = () => {
         />
       </div>
       <span className="text-sm text-gray-300"></span>
-      {!user && <AuthButton />}
       <div className="flex gap-2 lg:gap-4 items-center">
+        {!user && <AuthButton />}
         {user && <Logout />}
-        {user && <Link href="/profile">
-          <FaUser className="w-4 h-4 " />
-        </Link>}
+        {user && (
+          <Link href="/profile">
+            <FaUser className="w-4 h-4 " />
+          </Link>
+        )}
       </div>
     </header>
   );

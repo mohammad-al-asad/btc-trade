@@ -24,9 +24,23 @@ export async function POST(
     }
 
     // Get current BTC price from Binance
-    const btcResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
+    );
+    const { modifyData } = await res.json();
+    const btcResponse = await fetch(
+      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+    );
     const btcData = await btcResponse.json();
-    const currentBtcPrice = parseFloat(btcData.price);
+
+    const price = parseFloat(btcData.price);
+    const btcModifyFloat = parseFloat(modifyData.adjustment);
+    let currentBtcPrice: number;
+    if (btcModifyFloat < 0) {
+      currentBtcPrice = price - Math.abs(btcModifyFloat);
+    } else {
+      currentBtcPrice = btcModifyFloat + price;
+    }
 
     // Find the transaction
     const transaction = await prisma.transaction.findUnique({
@@ -91,6 +105,11 @@ export async function POST(
           },
         }),
       ]);
+      console.log({
+        btcAmount: transaction.amount,
+        usdtAmount,
+        btcPrice: currentBtcPrice,
+      });
 
       return NextResponse.json({
         message: "Deposit approved successfully",
@@ -101,7 +120,6 @@ export async function POST(
           btcPrice: currentBtcPrice,
         },
       });
-
     } else if (transaction.type === "WITHDRAWAL") {
       // For withdrawal: user requests USDT, we debit BTC (amount / btcPrice)
       const btcAsset = transaction.user.assets.find(
@@ -110,6 +128,7 @@ export async function POST(
       const usdtAsset = transaction.user.assets.find(
         (asset) => asset.assetName === "USDT"
       );
+      console.log(btcAsset, usdtAsset);
 
       if (!btcAsset || !usdtAsset) {
         return NextResponse.json(
@@ -118,11 +137,8 @@ export async function POST(
         );
       }
 
-      // Calculate BTC equivalent
-      const btcAmount = transaction.amount / currentBtcPrice;
-
       // Check if user has enough BTC
-      if (+btcAsset.amount < btcAmount) {
+      if (+usdtAsset.amount < transaction.amount) {
         return NextResponse.json(
           { error: "Insufficient BTC balance for withdrawal" },
           { status: 400 }
@@ -138,10 +154,10 @@ export async function POST(
         }),
         // Decrease BTC balance
         prisma.asset.update({
-          where: { id: btcAsset.id },
+          where: { id: usdtAsset.id },
           data: {
             amount: {
-              decrement: btcAmount,
+              decrement: transaction.amount,
             },
           },
         }),
@@ -150,11 +166,7 @@ export async function POST(
       return NextResponse.json({
         message: "Withdrawal approved successfully",
         transactionId,
-        conversion: {
-          usdtAmount: transaction.amount,
-          btcAmount,
-          btcPrice: currentBtcPrice,
-        },
+        usdtAmount: transaction.amount,
       });
     }
 
@@ -162,7 +174,6 @@ export async function POST(
       { error: "Invalid transaction type" },
       { status: 400 }
     );
-
   } catch (error) {
     console.error("Approve transaction error:", error);
     return NextResponse.json(

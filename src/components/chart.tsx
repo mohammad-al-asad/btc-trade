@@ -1,19 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-// pages/trading.js
 import { useState, useEffect, useRef } from "react";
-
-// Import the library correctly
 import { createChart } from "lightweight-charts";
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import TradePanel from "./trade";
 import Header from "./header";
 import BitcoinInfo from "./info";
 
-export default function TradingPage() {
-  const { data: session, status } = useSession();
-  // const router = useRouter();
+export default function TradingPage({ btcModify }: { btcModify: string }) {
   const [price, setPrice] = useState<number | null>(null);
   const [candleData, setCandleData] = useState<any[]>([]);
   const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({
@@ -22,9 +15,10 @@ export default function TradingPage() {
   });
   const [recentTrades, setRecentTrades] = useState<any[]>([]);
   const [timeframe, setTimeframe] = useState("1d");
-  const [quantity, setQuantity] = useState("0.001");
+  // const [quantity, setQuantity] = useState("0.001");
   const [isConnected, setIsConnected] = useState(false);
   const [selectedTab, setSelectedTab] = useState("Chart");
+
   const [indicators, setIndicators] = useState({
     ma25: 2.0771,
     ma99: 2.6543,
@@ -97,14 +91,14 @@ export default function TradingPage() {
         const volumeSeries = volumeChart.addHistogramSeries({
           priceFormat: { type: "volume" },
           priceScaleId: "",
-          scaleMargins: { top: 0.1, bottom: 0 },
+          // scaleMargins: { top: 0.1, bottom: 0 },
         });
 
         volumeChartRef.current = volumeChart;
         volumeSeriesRef.current = volumeSeries;
 
         // ✔ sync scroll
-        chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+        chart.timeScale().subscribeVisibleTimeRangeChange((range: any) => {
           try {
             volumeChart.timeScale().setVisibleRange(range);
           } catch {}
@@ -147,24 +141,6 @@ export default function TradingPage() {
       });
     }
   }, [candleData]);
-
-  // Fetch initial historical data
-  useEffect(() => {
-    fetchHistoricalData();
-  }, [timeframe]);
-
-  // WebSocket connections
-  useEffect(() => {
-    setupTradeWebSocket();
-    setupKlineWebSocket();
-    setupDepthWebSocket();
-
-    return () => {
-      if (tradeWsRef.current) tradeWsRef.current.close();
-      if (klineWsRef.current) klineWsRef.current.close();
-      if (depthWsRef.current) depthWsRef.current.close();
-    };
-  }, [timeframe]);
 
   const fetchHistoricalData = async () => {
     try {
@@ -238,8 +214,14 @@ export default function TradingPage() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const latestPrice = parseFloat(data.p);
-
+        const price = parseFloat(data.p);
+        const btcModifyFloat = parseFloat(btcModify);
+        let latestPrice: number;
+        if (btcModifyFloat < 0) {
+          latestPrice = price - Math.abs(btcModifyFloat);
+        } else {
+          latestPrice = btcModifyFloat + price;
+        }
         setPrice((prev) => {
           setPreviousPrice(prev);
           return latestPrice;
@@ -363,6 +345,28 @@ export default function TradingPage() {
 
     depthWsRef.current = ws;
   };
+  // Fetch initial historical data
+  useEffect(() => {
+    async function loadAsync() {
+      await fetchHistoricalData();
+    }
+    loadAsync();
+  }, [timeframe]);
+
+  // Btc Modify
+
+  // WebSocket connections
+  useEffect(() => {
+    setupTradeWebSocket();
+    setupKlineWebSocket();
+    setupDepthWebSocket();
+
+    return () => {
+      if (tradeWsRef.current) tradeWsRef.current.close();
+      if (klineWsRef.current) klineWsRef.current.close();
+      if (depthWsRef.current) depthWsRef.current.close();
+    };
+  }, [timeframe]);
 
   const timeframes = [
     { value: "1m", label: "1m" },
@@ -387,11 +391,9 @@ export default function TradingPage() {
   const priceChange = getPriceChange();
 
   // Format time for display
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleTimeString();
-  };
-
-
+  // const formatTime = (timestamp: number) => {
+  //   return new Date(timestamp * 1000).toLocaleTimeString();
+  // };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

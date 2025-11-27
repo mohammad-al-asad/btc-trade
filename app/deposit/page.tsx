@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import qr from "@/public/qr.jpg";
+import { FaCopy } from "react-icons/fa";
 
 export default function DepositPage() {
   const { status } = useSession();
@@ -55,10 +56,10 @@ export default function DepositPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#0d0d0d] to-black text-white">
       <div className="container mx-auto p-4 max-w-md">
         {/* QR Code and Bitcoin Address */}
-        <div className="bg-gray-800 rounded-2xl p-6 mb-6">
+        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mb-6 backdrop-blur-sm">
           <h3 className="text-lg font-semibold mb-4 text-center">
             Send Bitcoin to this address
           </h3>
@@ -66,7 +67,7 @@ export default function DepositPage() {
           {/* QR Code */}
           <div className="flex justify-center mb-4">
             <Image
-              className="rounded-2xl border border-white"
+              className="rounded-2xl border border-[#333]"
               width={200}
               height={200}
               src={qr}
@@ -76,60 +77,63 @@ export default function DepositPage() {
 
           {/* Bitcoin Address */}
           <div className="text-center">
-            <p className="text-sm text-gray-400 mb-2">Bitcoin Address</p>
-            <div className="bg-gray-700 rounded-lg p-3">
-              <p className="text-sm font-mono break-all">
-                1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH
-              </p>
+            <p className="text-sm text-[#9aa3b2] mb-2">Bitcoin Address</p>
+            <div className="relative">
+              <div className="bg-[#111] border border-[#232323] rounded-lg p-3 pr-10">
+                <p className="text-sm font-mono break-all">
+                  1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    "1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH"
+                  )
+                }
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors"
+                title="Copy Address"
+              >
+                <FaCopy size={16} />
+              </button>
             </div>
-            <button
-              onClick={() =>
-                navigator.clipboard.writeText(
-                  "1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH"
-                )
-              }
-              className="mt-2 text-blue-400 hover:text-blue-300 text-sm"
-            >
-              Copy Address
-            </button>
           </div>
         </div>
 
         {/* Deposit Form */}
-        {/* <div className="bg-gray-800 rounded-2xl p-6">
+        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 backdrop-blur-sm">
           <form onSubmit={handleDeposit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
                 Amount (BTC)
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
-                step="0.01"
-                min="10"
+                step="0.00000001"
+                min="0.00000001"
                 required
               />
-              <p className="text-xs text-gray-400 mt-1 ml-1.5">
-                Minimum deposit: $50.00
+              <p className="text-xs text-[#9aa3b2] mt-1 ml-1.5">
+                Minimum deposit: 0.00000001 BTC
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
                 Transaction ID
               </label>
               <input
                 type="text"
                 value={transaction}
                 onChange={(e) => setTransaction(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your Bitcoin transaction ID"
                 required
               />
-              <p className="text-xs text-gray-400 mt-1 ml-1.5">
+              <p className="text-xs text-[#9aa3b2] mt-1 ml-1.5">
                 Enter the Bitcoin transaction ID from your wallet
               </p>
             </div>
@@ -149,7 +153,7 @@ export default function DepositPage() {
             <button
               type="submit"
               disabled={processing}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg"
+              className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg"
             >
               {processing ? "Processing..." : "Request Deposit"}
             </button>
@@ -157,29 +161,29 @@ export default function DepositPage() {
         </div>
 
         {/* Instructions */}
-        <div className="bg-gray-800 rounded-2xl p-6 mt-6">
+        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mt-6 backdrop-blur-sm">
           <h3 className="text-lg font-semibold mb-4">Deposit Instructions</h3>
-          <div className="space-y-3 text-sm text-gray-300">
+          <div className="space-y-3 text-sm text-white">
             <div className="flex items-start">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
                 <span className="text-xs font-bold">1</span>
               </div>
               <p>Send Bitcoin to the address shown above</p>
             </div>
             <div className="flex items-start">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
                 <span className="text-xs font-bold">2</span>
               </div>
               <p>Wait for the transaction to be confirmed on the blockchain</p>
             </div>
             <div className="flex items-start">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
                 <span className="text-xs font-bold">3</span>
               </div>
               <p>Enter the amount and transaction ID in the form above</p>
             </div>
             <div className="flex items-start">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
                 <span className="text-xs font-bold">4</span>
               </div>
               <p>Your deposit will be processed after admin approval</p>

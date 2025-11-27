@@ -1,20 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserAssets } from "../lib/queries";
 import { AiFillPlusCircle } from "react-icons/ai";
 import { useCurrentUser } from "../lib/hook";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { SnackbarProvider, useSnackbar } from "notistack";
+import { useSnackbar } from "notistack";
 const TradePanel = ({ price }: { price: number }) => {
   const [quantity, setQuantity] = useState<any>(1);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data } = useQuery({
     queryKey: ["btc-price"],
     queryFn: getUserAssets,
-    refetchInterval: 1000, // auto-refresh every 1 sec
+    refetchInterval: 1000,
   });
+
   const user = useCurrentUser();
   const router = useRouter();
 
@@ -66,7 +68,7 @@ const TradePanel = ({ price }: { price: number }) => {
         {user && data && (
           <AssetLabels
             usdt={data.payload.usdt.amount}
-            btc={data.payload.btc.amount}
+            btc={(+data.payload.btc.amount).toFixed(20)}
           />
         )}
 
@@ -86,7 +88,7 @@ const TradePanel = ({ price }: { price: number }) => {
         </div>
 
         <div className="text-sm text-gray-400 text-center">
-          Est. BTC: ₿{quantity / price || 0}
+          Est. BTC: ₿{(quantity / price).toFixed(20)}
         </div>
       </div>
     </div>
@@ -95,7 +97,7 @@ const TradePanel = ({ price }: { price: number }) => {
 
 export default TradePanel;
 
-const AssetLabels = ({ usdt, btc }: { usdt: number; btc: number }) => {
+const AssetLabels = ({ usdt, btc }: { usdt: number; btc: string }) => {
   return (
     <div className="space-y-1.5 sticky bottom-0">
       <div className="flex justify-between items-center">
