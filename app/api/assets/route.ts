@@ -1,7 +1,5 @@
-import { AssetName } from "@/app/generated/prisma/enums";
 import { prisma } from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/utili";
-import { Decimal } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {

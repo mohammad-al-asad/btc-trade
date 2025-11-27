@@ -54,20 +54,20 @@ export default function WithdrawPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#0d0d0d] to-black text-white">
       <div className="container mx-auto p-4 max-w-md">
         {/* Withdrawal Form */}
-        <div className="bg-gray-800 rounded-2xl p-6">
+        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 backdrop-blur-sm">
           <form onSubmit={handleWithdraw} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
                 Amount (USD)
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
                 step="0.01"
                 min="10"
@@ -79,14 +79,14 @@ export default function WithdrawPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
                 Wallet Address
               </label>
               <input
                 type="text"
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your wallet address"
                 required
               />
@@ -107,7 +107,7 @@ export default function WithdrawPage() {
             <button
               type="submit"
               disabled={processing}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg"
+              className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-lg"
             >
               {processing ? "Processing..." : "Request Withdrawal"}
             </button>
@@ -115,7 +115,7 @@ export default function WithdrawPage() {
         </div>
 
         {/* Withdrawal Info */}
-        <div className="bg-gray-800 rounded-2xl p-6 mt-6">
+        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mt-6 backdrop-blur-sm">
           <h3 className="text-lg font-semibold mb-4">Withdrawal Information</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">

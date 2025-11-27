@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
@@ -22,10 +23,7 @@ export const authOptions: NextAuthOptions = {
           // Find user by email or username
           const user = await prisma.user.findFirst({
             where: {
-              OR: [
-                { email: credentials.email.toLowerCase() },
-                { username: credentials.email.toLowerCase() },
-              ],
+              email: credentials.email.toLowerCase(),
             },
           });
 
@@ -55,6 +53,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.username,
+            role: user.role,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -73,12 +72,14 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }: { session: any; token: any }) => {
       if (session?.user) {
         session.user.id = token.sub;
+        session.user.role = token.role;
       }
       return session;
     },
-    jwt: async ({ user, token }) => {
+    jwt: async ({ user, token }: { user: any; token: any }) => {
       if (user) {
         token.uid = user.id;
+        token.role = user.role;
       }
       return token;
     },
