@@ -227,9 +227,20 @@ export default function ProfilePage() {
               <button
                 title="Sign out"
                 onClick={() => signOut()}
-                className="bg-gray-700 border-[2.5px] border-red-400 p-3 rounded-full"
+                className="
+    p-3 rounded-full
+    bg-[#141414]/60
+    border border-[#2b2b2b]
+    backdrop-blur-sm
+    shadow-md
+    transition-all duration-300
+    hover:bg-red-600/20
+    hover:border-red-500
+    hover:shadow-red-500/30
+    hover:scale-105
+  "
               >
-                <IoLogOut className="w-5 h-5" />
+                <IoLogOut className="w-5 h-5 text-gray-300 group-hover:text-white" />
               </button>
             </div>
           </div>
@@ -353,7 +364,7 @@ export default function ProfilePage() {
         )}
 
         {activeTab === "activity" && (
-          <div className="bg-[#0f1113]/60 border border-[#222] rounded-xl p-4 space-y-3 h-[600px] overflow-auto">
+          <div className="bg-[#0f1113]/60 border border-[#222] rounded-xl p-4 space-y-3 max-h-[600px] overflow-auto">
             {transactionData.length === 0 ? (
               <p className="text-center text-gray-400 py-6">
                 No recent transactions found.
