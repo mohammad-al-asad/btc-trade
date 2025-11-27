@@ -89,7 +89,15 @@ export default function SignIn() {
           </p>
         </div>
 
-        
+        <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+          <p className="text-sm text-gray-300 text-center">
+            Demo credentials:
+            <br />
+            Email: ma@ma.ma
+            <br />
+            Password: maasad11
+          </p>
+        </div>
       </div>
     </div>
   );
