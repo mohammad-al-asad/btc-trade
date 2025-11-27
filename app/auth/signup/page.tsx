@@ -172,23 +172,6 @@ export default function SignUp() {
               />
             </div>
 
-            <div>
-              <label htmlFor="deviceName" className="block text-sm font-medium text-gray-300 mb-2">
-                Device Name (Optional)
-              </label>
-              <input
-                id="deviceName"
-                name="deviceName"
-                type="text"
-                value={formData.deviceName}
-                onChange={handleChange}
-                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., My Laptop, Office PC"
-              />
-              <p className="mt-1 text-xs text-gray-400">
-                This device will be automatically whitelisted for security
-              </p>
-            </div>
           </div>
 
           {error && (

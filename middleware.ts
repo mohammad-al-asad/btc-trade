@@ -14,6 +14,7 @@ export async function middleware(req: NextRequest) {
   // --------------------
   
   if (pathname.startsWith("/protected")) {
+    
     if (!token || token.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/", req.url));
     }
@@ -23,9 +24,17 @@ export async function middleware(req: NextRequest) {
   // --------------------
   // 2. Auth routes (only for NOT logged-in users)
   // --------------------
+  
   if (pathname.startsWith("/auth")) {
     if (token) {
       return NextResponse.redirect(new URL("/profile", req.url)); // redirect logged-in users
+    }
+    return NextResponse.next();
+  }
+  
+  if (pathname.startsWith("/profile")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/auth/signin", req.url)); // redirect logged-in users
     }
     return NextResponse.next();
   }
@@ -55,5 +64,6 @@ export const config = {
     "/profile/:path*",
     "/deposit/:path*",
     "/withdraw/:path*",
+    "/profile/:path*",
   ],
 };

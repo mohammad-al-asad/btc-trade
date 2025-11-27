@@ -39,7 +39,7 @@ export default Header;
 const AuthButton = () => {
   return (
     <Link
-      href="/auth/signup"
+      href="/auth/signin"
       type="button"
       className={
         // rounded 2xl, padding, white text, bold, subtle shadow
@@ -49,7 +49,7 @@ const AuthButton = () => {
         // small hover effect: slightly stronger tail
       }
     >
-      Signup
+      Signin
     </Link>
   );
 };
