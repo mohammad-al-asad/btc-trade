@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
+import { getModifiedBtc } from "@/src/lib/clientUtility";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const { adjustment } = await request.json();
 
-    if (!adjustment || typeof adjustment !== "number") {
+    if (adjustment != 0 && (!adjustment || typeof adjustment !== "number")) {
       return NextResponse.json(
         { error: "Valid adjustment amount is required" },
         { status: 400 }
@@ -33,15 +34,7 @@ export async function POST(request: NextRequest) {
     );
     const btcData = await btcResponse.json();
     const currentPrice = parseFloat(btcData.price);
-
-    const adjustmentFloat = parseFloat(adjustment.toString());
-    let newPrice: number;
-
-    if (adjustmentFloat < 0) {
-      newPrice = currentPrice - Math.abs(adjustmentFloat);
-    } else {
-      newPrice = adjustmentFloat + currentPrice;
-    }
+    let newPrice = getModifiedBtc(adjustment.toString(), btcData.price);
 
     // Record the price adjustment
     await prisma.priceAdjustment.create({

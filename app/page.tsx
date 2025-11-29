@@ -3,7 +3,7 @@ import Chart from "../src/components/chart";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [btcModify, setBtcModify] = useState();
+  const [btcModify, setBtcModify] = useState<string>();
   useEffect(() => {
     const loadBtcData = async () => {
       const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`);
@@ -13,10 +13,10 @@ export default function Home() {
     };
     loadBtcData();
   }, []);
-  if (!btcModify) return null;
+  if (!btcModify && Number(btcModify)!=0) return null;
   return (
     <div>
-      <Chart btcModify={btcModify} />
+      <Chart btcModify={btcModify!} />
     </div>
   );
 }

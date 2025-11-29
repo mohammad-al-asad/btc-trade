@@ -5,3 +5,4 @@ export const getCurrentUser = async () => {
   const session: any = await getServerSession(authOptions);
   return session?.user || null;
 };
+
