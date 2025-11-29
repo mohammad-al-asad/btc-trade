@@ -614,207 +614,202 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
           ))}
         </div>
 
-        {selectedTab == "Chart" && (
-          <div>
-            {/* Error Display */}
-            {/* {chartError && (
+        <div className={selectedTab != "Chart" ? "hidden" : "block"}>
+          {/* Error Display */}
+          {/* {chartError && (
               <div className="bg-red-600 text-white p-3 rounded mb-4">
                 {chartError}
               </div>
             )} */}
 
-            {/* Chart Header */}
-            <div className="flex flex-wrap justify-between items-center mb-2">
-              <div className="grid grid-cols-2 md:flex gap-4 items-start space-x-4 w-full">
-                <div>
-                  <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
-                  <div className="text-xs lg:text-sm text-gray-400">
-                    {timeframe.toUpperCase()} · Binance
-                  </div>
+          {/* Chart Header */}
+          <div className="flex flex-wrap justify-between items-center mb-2">
+            <div className="grid grid-cols-2 md:flex gap-4 items-start space-x-4 w-full">
+              <div>
+                <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
+                <div className="text-xs lg:text-sm text-gray-400">
+                  {timeframe.toUpperCase()} · Binance
                 </div>
-                <div>
-                  {price && (
-                    <div
-                      style={{
-                        color: `${
-                          previousPrice !== null
-                            ? price > previousPrice
-                              ? "#2ebd85"
-                              : price < previousPrice
-                              ? "#f6465d"
-                              : "#2ebd85"
-                            : "#2ebd85"
-                        }`,
-                      }}
-                      className={`text-lg lg:text-xl font-semibold `}
-                    >
-                      $
-                      {price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm w-full">
-                  <div className="flex space-x-4  w-full">
-                    <span className="text-xs lg:text-sm">
-                      O{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.open.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm">
-                      H{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.high.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm">
-                      L{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.low.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm ">
-                      C {price ? price.toFixed(4) : "0.0000"}
-                    </span>
-                  </div>
+              </div>
+              <div>
+                {price && (
                   <div
-                    className={`font-semibold text-[10px] lg:text-xs ${
-                      priceChange.change >= 0
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }`}
+                    style={{
+                      color: `${
+                        previousPrice !== null
+                          ? price > previousPrice
+                            ? "#2ebd85"
+                            : price < previousPrice
+                            ? "#f6465d"
+                            : "#2ebd85"
+                          : "#2ebd85"
+                      }`,
+                    }}
+                    className={`text-lg lg:text-xl font-semibold `}
                   >
-                    {priceChange.change >= 0 ? "+" : ""}
-                    {priceChange.change.toFixed(4)} (
-                    {priceChange.percent >= 0 ? "+" : ""}
-                    {priceChange.percent.toFixed(2)}%)
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center  w-full  justify-between md:justify-start space-x-2 mt-4 md:mt-0">
-                {/* Timeframe Buttons */}
-                <div className="flex bg-gray-800 rounded p-1">
-                  {timeframes.map((tf) => (
-                    <button
-                      key={tf.value}
-                      onClick={() => setTimeframe(tf.value)}
-                      className={`p-1 md:px-2 md:py-1 text-xs rounded ${
-                        timeframe === tf.value
-                          ? "bg-gray-600"
-                          : "hover:bg-gray-700"
-                      }`}
-                    >
-                      {tf.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Chart Controls */}
-                <button className="p-1 hover:bg-gray-700 rounded text-xs">
-                  ☐
-                </button>
-                <button className="p-1 hover:bg-gray-700 rounded text-xs ">
-                  O
-                </button>
-                <select className="bg-gray-800 rounded px-2 py-1 text-xs">
-                  <option>Trading View</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Indicators */}
-            <div className="flex space-x-4 text-xs text-gray-400 mb-2">
-              <div>
-                MA 25 close 0{" "}
-                <span className="text-white">{indicators.ma25.toFixed(4)}</span>
-              </div>
-              <div>
-                MA 99 close 0{" "}
-                <span className="text-white">{indicators.ma99.toFixed(4)}</span>
-              </div>
-            </div>
-
-            {/* Main Chart Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* Chart - 3/4 width */}
-              <div className="lg:col-span-3 rounded-lg md:p-4 ">
-                {/* Main Candlestick Chart */}
-                <div
-                  ref={chartContainerRef}
-                  className="w-full border-2 border-gray-700 bg-gray-800 "
-                />
-
-                {/* Volume Chart - BOTTOM OF MAIN CHART */}
-                <div
-                  ref={volumeChartContainerRef}
-                  className="w-full border-2 border-gray-700 bg-gray-800 mt-2 "
-                />
-
-                {!isChartInitialized && !chartError && (
-                  <div className="text-center text-gray-400 py-8">
-                    Initializing chart...
+                    $
+                    {price.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </div>
                 )}
-
-                <div className="mt-2 lg:mt-4 text-xs text-gray-400 text-center">
-                  {new Date().toLocaleTimeString()} UTC
+              </div>
+              <div className="text-sm w-full">
+                <div className="flex space-x-4  w-full">
+                  <span className="text-xs lg:text-sm">
+                    O{" "}
+                    {candleData.length > 0
+                      ? candleData[candleData.length - 1]?.open.toFixed(4) ||
+                        "0.0000"
+                      : "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm">
+                    H{" "}
+                    {candleData.length > 0
+                      ? candleData[candleData.length - 1]?.high.toFixed(4) ||
+                        "0.0000"
+                      : "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm">
+                    L{" "}
+                    {candleData.length > 0
+                      ? candleData[candleData.length - 1]?.low.toFixed(4) ||
+                        "0.0000"
+                      : "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm ">
+                    C {price ? price.toFixed(4) : "0.0000"}
+                  </span>
+                </div>
+                <div
+                  className={`font-semibold text-[10px] lg:text-xs ${
+                    priceChange.change >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {priceChange.change >= 0 ? "+" : ""}
+                  {priceChange.change.toFixed(4)} (
+                  {priceChange.percent >= 0 ? "+" : ""}
+                  {priceChange.percent.toFixed(2)}%)
                 </div>
               </div>
+            </div>
 
-              {/* Sidebar - 1/4 width */}
-              <div className="space-y-2 lg:space-y-4">
-                <TradePanel price={Number(price)} />
+            <div className="flex items-center  w-full  justify-between md:justify-start space-x-2 mt-4 md:mt-0">
+              {/* Timeframe Buttons */}
+              <div className="flex bg-gray-800 rounded p-1">
+                {timeframes.map((tf) => (
+                  <button
+                    key={tf.value}
+                    onClick={() => setTimeframe(tf.value)}
+                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${
+                      timeframe === tf.value
+                        ? "bg-gray-600"
+                        : "hover:bg-gray-700"
+                    }`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
+              </div>
 
-                {/* Order Book */}
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
-                    Order Book
-                  </h3>
+              {/* Chart Controls */}
+              <button className="p-1 hover:bg-gray-700 rounded text-xs">
+                ☐
+              </button>
+              <button className="p-1 hover:bg-gray-700 rounded text-xs ">
+                O
+              </button>
+              <select className="bg-gray-800 rounded px-2 py-1 text-xs">
+                <option>Trading View</option>
+              </select>
+            </div>
+          </div>
 
-                  <div className="space-y-1 text-xs">
-                    {orderBook.asks.map((ask: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex justify-between text-red-400"
-                      >
-                        <span>{ask.price.toFixed(2)}</span>
-                        <span>{ask.quantity.toFixed(6)}</span>
-                      </div>
-                    ))}
+          {/* Indicators */}
+          <div className="flex space-x-4 text-xs text-gray-400 mb-2">
+            <div>
+              MA 25 close 0{" "}
+              <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+            </div>
+            <div>
+              MA 99 close 0{" "}
+              <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+            </div>
+          </div>
 
-                    <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
-                      Spread:{" "}
-                      {orderBook.bids.length > 0 && orderBook.asks.length > 0
-                        ? (
-                            ((orderBook.asks[0].price -
-                              orderBook.bids[0].price) /
-                              orderBook.bids[0].price) *
-                            100
-                          ).toFixed(4) + "%"
-                        : "0%"}
+          {/* Main Chart Area */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            {/* Chart - 3/4 width */}
+            <div className="lg:col-span-3 rounded-lg md:p-4 ">
+              {/* Main Candlestick Chart */}
+              <div
+                ref={chartContainerRef}
+                className="w-full border-2 border-gray-700 bg-gray-800 "
+              />
+
+              {/* Volume Chart - BOTTOM OF MAIN CHART */}
+              <div
+                ref={volumeChartContainerRef}
+                className="w-full border-2 border-gray-700 bg-gray-800 mt-2 "
+              />
+
+              {!isChartInitialized && !chartError && (
+                <div className="text-center text-gray-400 py-8">
+                  Initializing chart...
+                </div>
+              )}
+
+              <div className="mt-2 lg:mt-4 text-xs text-gray-400 text-center">
+                {new Date().toLocaleTimeString()} UTC
+              </div>
+            </div>
+
+            {/* Sidebar - 1/4 width */}
+            <div className="space-y-2 lg:space-y-4">
+              <TradePanel price={Number(price)} />
+
+              {/* Order Book */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
+                  Order Book
+                </h3>
+
+                <div className="space-y-1 text-xs">
+                  {orderBook.asks.map((ask: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between text-red-400"
+                    >
+                      <span>{ask.price.toFixed(2)}</span>
+                      <span>{ask.quantity.toFixed(6)}</span>
                     </div>
+                  ))}
 
-                    {orderBook.bids.map((bid: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex justify-between text-green-400"
-                      >
-                        <span>{bid.price.toFixed(2)}</span>
-                        <span>{bid.quantity.toFixed(6)}</span>
-                      </div>
-                    ))}
+                  <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
+                    Spread:{" "}
+                    {orderBook.bids.length > 0 && orderBook.asks.length > 0
+                      ? (
+                          ((orderBook.asks[0].price - orderBook.bids[0].price) /
+                            orderBook.bids[0].price) *
+                          100
+                        ).toFixed(4) + "%"
+                      : "0%"}
                   </div>
+
+                  {orderBook.bids.map((bid: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between text-green-400"
+                    >
+                      <span>{bid.price.toFixed(2)}</span>
+                      <span>{bid.quantity.toFixed(6)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
         {selectedTab == "Info" && <BitcoinInfo />}
       </div>
     </div>
