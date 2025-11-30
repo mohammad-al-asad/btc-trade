@@ -25,6 +25,7 @@ model User {
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  futuresTrade  FutureTrade[]
 }
 
 // add defaut device information to protect 2nd device login. 
@@ -87,4 +88,27 @@ model PriceAdjustment {
   adjustment Float // The amount added/subtracted
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt()
+}
+
+
+enum FutureTradeStatus {
+  RUNNING
+  CANCELLED
+}
+enum FutureTradeType{
+  LONG
+  SHORT
+}
+model FutureTrade {
+  id         String   @id @default(cuid())
+  status      FutureTradeStatus @default(RUNNING)
+  trade       FutureTradeType
+  entryUSDT    Decimal
+  margin      Decimal
+  profit      Decimal?
+  loss      Decimal?
+  leverage    Int
+  createAt    DateTime @default(now())
+  userId      String
+  user        User @relation(fields: [userId], references: [id])
 }
