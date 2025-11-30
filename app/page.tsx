@@ -6,7 +6,9 @@ export default function Home() {
   const [btcModify, setBtcModify] = useState<string>();
   useEffect(() => {
     const loadBtcData = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
+      );
       const { modifyData } = await res.json();
 
       setBtcModify(modifyData.adjustment);

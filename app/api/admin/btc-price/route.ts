@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     );
     const btcData = await btcResponse.json();
     const currentPrice = parseFloat(btcData.price);
-    let newPrice = getModifiedBtc(adjustment.toString(), btcData.price);
+    const newPrice = getModifiedBtc(adjustment.toString(), btcData.price);
 
     // Record the price adjustment
     await prisma.priceAdjustment.create({
