@@ -68,7 +68,7 @@ const Logout = () => {
   return (
     <button
       onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-      className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors"
+      className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors ml-1"
     >
       Sign Out
     </button>

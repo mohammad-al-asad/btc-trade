@@ -329,11 +329,11 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          let modifedPrice = getModifiedBtc(btcModify, data.p);
+          const modifiedPrice = getModifiedBtc(btcModify, data.p);
 
           setPrice((prev) => {
             setPreviousPrice(prev);
-            return modifedPrice;
+            return modifiedPrice;
           });
         } catch (error) {
           console.error("Error processing trade data:", error);
@@ -540,8 +540,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     { value: "1d", label: "1D" },
   ];
 
-  const tabs = ["Chart", "Info"];
-
   const getPriceChange = () => {
     if (candleData.length < 2) return { change: 0, percent: 0 };
     const current = candleData[candleData.length - 1]?.close || price || 0;
@@ -553,7 +551,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   const priceChange = getPriceChange();
 
-  const { setPrice: setGolbalPrice } = usePrice((state) => state);
+  const { setPrice: setGolbalPrice } = usePrice((state:any) => state);
   useEffect(() => {
     if (price) {
       setGolbalPrice(price);
