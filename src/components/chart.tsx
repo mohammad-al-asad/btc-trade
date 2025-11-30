@@ -7,6 +7,8 @@ import Header from "./header";
 import BitcoinInfo from "./info";
 import { useSize } from "../lib/hook";
 import { getModifiedBtc } from "../lib/clientUtility";
+import { usePrice } from "../lib/store";
+import TradeHistory from "./history";
 
 export default function TradingPage({ btcModify }: { btcModify: string }) {
   const [price, setPrice] = useState<number | null>(null);
@@ -71,28 +73,29 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       // MAIN CANDLESTICK CHART
       const chart = createChart(chartContainerRef.current, {
         layout: {
-          background: { color: "#1e293b" },
-          textColor: "#d1d5db",
+          // Binance-like dark background and text
+          background: { color: "rgb(24,26,31)" },
+          textColor: "#cfd2d3",
         },
         grid: {
-          vertLines: { color: "#374151" },
-          horzLines: { color: "#374151" },
+          vertLines: { color: "#1f2328" },
+          horzLines: { color: "#1f2328" },
         },
         width: chartContainerRef.current.clientWidth,
         height: size == "SM" ? 220 : size == "MD" ? 280 : 400,
         timeScale: {
           timeVisible: true,
           secondsVisible: false,
-          borderColor: "#374151",
+          borderColor: "#1f2328",
         },
       });
 
       const candleSeries = chart.addCandlestickSeries({
-        upColor: "#26a69a",
-        downColor: "#ef5350",
+        upColor: "#0ecb81",
+        downColor: "#f6465d",
         borderVisible: false,
-        wickUpColor: "#26a69a",
-        wickDownColor: "#ef5350",
+        wickUpColor: "#0ecb81",
+        wickDownColor: "#f6465d",
       });
 
       chartRef.current = chart;
@@ -102,24 +105,24 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       if (volumeChartContainerRef.current) {
         const volumeChart: any = createChart(volumeChartContainerRef.current, {
           layout: {
-            background: { color: "#1e293b" },
-            textColor: "#d1d5db",
+            background: { color: "rgb(24,26,31)" },
+            textColor: "#cfd2d3",
           },
           grid: {
-            vertLines: { color: "#374151" },
-            horzLines: { color: "#374151" },
+            vertLines: { color: "#1f2328" },
+            horzLines: { color: "#1f2328" },
           },
           width: volumeChartContainerRef.current.clientWidth,
           height: size == "SM" ? 80 : size == "MD" ? 110 : 150,
           timeScale: {
             timeVisible: true,
             secondsVisible: false,
-            borderColor: "#374151",
+            borderColor: "#1f2328",
           },
         });
 
         const volumeSeries = volumeChart.addHistogramSeries({
-          color: "#26a69a",
+          color: "#0ecb81",
           priceFormat: {
             type: "volume",
           },
@@ -265,8 +268,8 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
         value: getModifiedBtc(btcModify, candle[5]),
         color:
           parseFloat(candle[4]) >= parseFloat(candle[1])
-            ? "#26a69a"
-            : "#ef5350",
+            ? "#0ecb81"
+            : "#f6465d",
       }));
 
       setCandleData(formattedCandles);
@@ -428,8 +431,8 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
             value: getModifiedBtc(btcModify, kline.v),
             color:
               parseFloat(kline.c) >= parseFloat(kline.o)
-                ? "#26a69a"
-                : "#ef5350",
+                ? "#0ecb81"
+                : "#f6465d",
           };
 
           if (kline.x) {
@@ -582,15 +585,22 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   const priceChange = getPriceChange();
 
+  const { setPrice: setGolbalPrice } = usePrice((state) => state);
+  useEffect(() => {
+    if (price) {
+      setGolbalPrice(price);
+    }
+  }, [price]);
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-[rgb(12,14,17)] text-white">
       {/* Connection Status */}
       {/* <div
         className={`p-1 text-center text-xs ${
           isConnected ? "bg-green-600" : "bg-red-600"
         }`}
       >
-        {isConnected
+        {isConnectedå
           ? "Connected to Binance"
           : "Disconnected - Reconnecting..."}
       </div> */}
@@ -598,14 +608,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
       <div className="container mx-auto p-2">
         {/* Top Navigation Tabs */}
-        <div className="flex border-b border-gray-600 mb-4">
+        <div className="flex border-b border-[rgb(53,59,70)]  bg-[rgb(24,26,31)] p-1 lg:p-2 rounded-t-sm md:rounded-t-md lg:rounded-t-lg">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
               className={`px-4 py-2 font-medium ${
                 selectedTab === tab
-                  ? "text-blue-400 border-b-2 border-blue-400"
+                  ? "text-[rgb(108,244,239)] border-b-2 border-[rgb(108,244,239)]"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -623,134 +633,137 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
             )} */}
 
           {/* Chart Header */}
-          <div className="flex flex-wrap justify-between items-center mb-2">
-            <div className="grid grid-cols-2 md:flex gap-4 items-start space-x-4 w-full">
-              <div>
-                <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
-                <div className="text-xs lg:text-sm text-gray-400">
-                  {timeframe.toUpperCase()} · Binance
-                </div>
-              </div>
-              <div>
-                {price && (
-                  <div
-                    style={{
-                      color: `${
-                        previousPrice !== null
-                          ? price > previousPrice
-                            ? "#2ebd85"
-                            : price < previousPrice
-                            ? "#f6465d"
-                            : "#2ebd85"
-                          : "#2ebd85"
-                      }`,
-                    }}
-                    className={`text-lg lg:text-xl font-semibold `}
-                  >
-                    $
-                    {price.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-b-sm md:rounded-b-md lg:rounded-b-lg mb-2 w-full">
+            <div className="flex flex-col md:flex-row justify-between items-center flex-1  ">
+              <div className="grid  grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
+                <div>
+                  <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
+                  <div className="text-xs lg:text-sm text-gray-400">
+                    {timeframe.toUpperCase()} · Binance
                   </div>
-                )}
-              </div>
-              <div className="text-sm w-full">
-                <div className="flex space-x-4  w-full">
-                  <span className="text-xs lg:text-sm">
-                    O{" "}
-                    {candleData.length > 0
-                      ? candleData[candleData.length - 1]?.open.toFixed(4) ||
-                        "0.0000"
-                      : "0.0000"}
-                  </span>
-                  <span className="text-xs lg:text-sm">
-                    H{" "}
-                    {candleData.length > 0
-                      ? candleData[candleData.length - 1]?.high.toFixed(4) ||
-                        "0.0000"
-                      : "0.0000"}
-                  </span>
-                  <span className="text-xs lg:text-sm">
-                    L{" "}
-                    {candleData.length > 0
-                      ? candleData[candleData.length - 1]?.low.toFixed(4) ||
-                        "0.0000"
-                      : "0.0000"}
-                  </span>
-                  <span className="text-xs lg:text-sm ">
-                    C {price ? price.toFixed(4) : "0.0000"}
-                  </span>
                 </div>
-                <div
-                  className={`font-semibold text-[10px] lg:text-xs ${
-                    priceChange.change >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {priceChange.change >= 0 ? "+" : ""}
-                  {priceChange.change.toFixed(4)} (
-                  {priceChange.percent >= 0 ? "+" : ""}
-                  {priceChange.percent.toFixed(2)}%)
+                <div>
+                  {price && (
+                    <div
+                      style={{
+                        color: `${
+                          previousPrice !== null
+                            ? price > previousPrice
+                              ? "#0ecb81"
+                              : price < previousPrice
+                              ? "#f6465d"
+                              : "#0ecb81"
+                            : "#0ecb81"
+                        }`,
+                      }}
+                      className={`text-lg text-end lg:text-xl font-semibold `}
+                    >
+                      $
+                      {price.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-
-            <div className="flex items-center  w-full  justify-between md:justify-start space-x-2 mt-4 md:mt-0">
-              {/* Timeframe Buttons */}
-              <div className="flex bg-gray-800 rounded p-1">
-                {timeframes.map((tf) => (
-                  <button
-                    key={tf.value}
-                    onClick={() => setTimeframe(tf.value)}
-                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${
-                      timeframe === tf.value
-                        ? "bg-gray-600"
-                        : "hover:bg-gray-700"
+                <div className="text-sm w-full">
+                  <div className="flex space-x-4  w-full">
+                    <span className="text-xs lg:text-sm">
+                      O{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1]?.open.toFixed(4) ||
+                          "0.0000"
+                        : "0.0000"}
+                    </span>
+                    <span className="text-xs lg:text-sm">
+                      H{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1]?.high.toFixed(4) ||
+                          "0.0000"
+                        : "0.0000"}
+                    </span>
+                    <span className="text-xs lg:text-sm">
+                      L{" "}
+                      {candleData.length > 0
+                        ? candleData[candleData.length - 1]?.low.toFixed(4) ||
+                          "0.0000"
+                        : "0.0000"}
+                    </span>
+                    <span className="text-xs lg:text-sm ">
+                      C {price ? price.toFixed(4) : "0.0000"}
+                    </span>
+                  </div>
+                  <div
+                    className={`font-semibold text-[10px] lg:text-xs ${
+                      priceChange.change >= 0
+                        ? "text-[#0ecb81]"
+                        : "text-[#f6465d]"
                     }`}
                   >
-                    {tf.label}
-                  </button>
-                ))}
+                    {priceChange.change >= 0 ? "+" : ""}
+                    {priceChange.change.toFixed(4)} (
+                    {priceChange.percent >= 0 ? "+" : ""}
+                    {priceChange.percent.toFixed(2)}%)
+                  </div>
+                </div>
               </div>
 
-              {/* Chart Controls */}
-              <button className="p-1 hover:bg-gray-700 rounded text-xs">
-                ☐
-              </button>
-              <button className="p-1 hover:bg-gray-700 rounded text-xs ">
-                O
-              </button>
-              <select className="bg-gray-800 rounded px-2 py-1 text-xs">
-                <option>Trading View</option>
-              </select>
-            </div>
-          </div>
+              <div className="flex items-center  w-full   justify-between md:justify-end space-x-2 mt-3 md:mt-0">
+                {/* Timeframe Buttons */}
+                <div className="flex bg-[#1f2328] rounded p-1">
+                  {timeframes.map((tf) => (
+                    <button
+                      key={tf.value}
+                      onClick={() => setTimeframe(tf.value)}
+                      className={`p-1 md:px-2 md:py-1 text-xs rounded ${
+                        timeframe === tf.value
+                          ? "bg-[#2b3139]"
+                          : "hover:bg-[#2b3139]"
+                      }`}
+                    >
+                      {tf.label}
+                    </button>
+                  ))}
+                </div>
 
-          {/* Indicators */}
-          <div className="flex space-x-4 text-xs text-gray-400 mb-2">
-            <div>
-              MA 25 close 0{" "}
-              <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+                {/* Chart Controls */}
+                <button className="p-1 hover:bg-[#2b3139] rounded text-xs">
+                  ☐
+                </button>
+                <button className="p-1 hover:bg-[#2b3139] rounded text-xs ">
+                  O
+                </button>
+                <select className="bg-[#1f2328] rounded px-2 py-1 text-xs">
+                  <option>Trading View</option>
+                </select>
+              </div>
             </div>
-            <div>
-              MA 99 close 0{" "}
-              <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+            {/* Indicators */}
+            <div className="flex space-x-4 text-xs text-gray-400 mt-1 mb-2">
+              <div>
+                MA 25 close 0{" "}
+                <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+              </div>
+              <div>
+                MA 99 close 0{" "}
+                <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+              </div>
             </div>
           </div>
 
           {/* Main Chart Area */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
             {/* Chart - 3/4 width */}
-            <div className="lg:col-span-3 rounded-lg md:p-4 ">
+            <div className="lg:col-span-3 h-fit rounded-lg ">
               {/* Main Candlestick Chart */}
               <div
                 ref={chartContainerRef}
-                className="w-full border-2 border-gray-700 bg-gray-800 "
+                className=" border-2 border-[#1f2328] bg-[#0b0e11] w-full rounded-t-lg overflow-hidden"
               />
 
               {/* Volume Chart - BOTTOM OF MAIN CHART */}
               <div
                 ref={volumeChartContainerRef}
-                className="w-full border-2 border-gray-700 bg-gray-800 mt-2 "
+                className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden"
               />
 
               {!isChartInitialized && !chartError && (
@@ -762,14 +775,16 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
               <div className="mt-2 lg:mt-4 text-xs text-gray-400 text-center">
                 {new Date().toLocaleTimeString()} UTC
               </div>
+
+              <TradeHistory />
             </div>
 
             {/* Sidebar - 1/4 width */}
-            <div className="space-y-2 lg:space-y-4">
+            <div className="space-y-2 lg:space-y-2 ">
               <TradePanel price={Number(price)} />
 
               {/* Order Book */}
-              <div className="bg-gray-800 rounded-lg p-4">
+              <div className="bg-[rgb(24,26,31)] rounded-lg p-4 border border-[#1f2328]">
                 <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
                   Order Book
                 </h3>
@@ -778,15 +793,15 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                   {orderBook.asks.map((ask: any, index: number) => (
                     <div
                       key={index}
-                      className="flex justify-between text-red-400"
+                      className="flex justify-between text-[#f6465d]"
                     >
                       <span>{ask.price.toFixed(2)}</span>
                       <span>{ask.quantity.toFixed(6)}</span>
                     </div>
                   ))}
 
-                  <div className="text-center text-gray-400 my-2 border-t border-b border-gray-600 py-1">
-                    Spread:{" "}
+                  <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
+                    Spread:
                     {orderBook.bids.length > 0 && orderBook.asks.length > 0
                       ? (
                           ((orderBook.asks[0].price - orderBook.bids[0].price) /
@@ -799,7 +814,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                   {orderBook.bids.map((bid: any, index: number) => (
                     <div
                       key={index}
-                      className="flex justify-between text-green-400"
+                      className="flex justify-between text-[#0ecb81]"
                     >
                       <span>{bid.price.toFixed(2)}</span>
                       <span>{bid.quantity.toFixed(6)}</span>
