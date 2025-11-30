@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BTC DAM",
-  description: "Trade your BTC now..",
+  title: "SORA",
+  description: "The funded account",
 };
 
 export default function RootLayout({

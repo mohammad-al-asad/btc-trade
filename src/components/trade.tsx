@@ -49,7 +49,7 @@ const TradePanel = ({ price }: { price: number }) => {
 
   return (
     <div className="bg-gray-800 rounded-lg p-4">
-      <h3 className="text-lg font-semibold mb-4">Trade</h3>
+      <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4 ">Trade</h3>
 
       <div className="space-y-3">
         <div>

@@ -4,22 +4,26 @@ import { useCurrentUser } from "../lib/hook";
 import Link from "next/link";
 import Image from "next/image";
 import { FaUser } from "react-icons/fa";
-import logo from "../../public/logo.png";
+import logo from "../../public/logo.avif";
 import { signOut } from "next-auth/react";
 
 const Header = () => {
   const user = useCurrentUser();
   return (
     <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-2 md:py-4 ">
-      <div>
+      <Link href="/" className="flex items-center gap-3">
         <Image
           src={logo}
           alt="Trading"
-          width={100}
-          className="w-[100px] "
+          width={80}
+          className="w-[50px] "
           // placeholder="blur"
         />
-      </div>
+        <div className="text-[rgb(108,244,239)] font-serif">
+          <h1 className="font-bold text-2xl">SORA</h1>
+          <p className="text-[9px] leading-2">The funded account</p>
+        </div>
+      </Link>
       <span className="text-sm text-gray-300"></span>
       <div className="flex gap-2 lg:gap-4 items-center">
         {!user && <AuthButton />}
