@@ -12,7 +12,6 @@ const Header = () => {
   return (
     <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-2 md:py-3 ">
       {/* Logo */}
-    <header className="flex items-center  bg-[rgb(24,26,31)] px-4 md:px-10 lg:px-16 justify-between py-2 md:py-4 ">
       <Link href="/" className="flex items-center gap-3">
         <Image src={logo} alt="Trading" width={80} className="w-[50px]" />
         <div className="text-main font-serif">

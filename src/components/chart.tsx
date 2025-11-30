@@ -54,10 +54,10 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   // Reinitialize charts when tab changes back to Chart
   useEffect(() => {
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      initializeCharts();
-    }, 100);
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        initializeCharts();
+      }, 100);
   }, [isChartInitialized]);
 
   const initializeCharts = () => {
@@ -329,7 +329,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const modifedPrice = getModifiedBtc(btcModify, data.p);
+          let modifedPrice = getModifiedBtc(btcModify, data.p);
 
           setPrice((prev) => {
             setPreviousPrice(prev);
@@ -349,14 +349,15 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onclose = (event) => {
         console.log("Trade WebSocket disconnected:", event.code, event.reason);
         setIsConnected(false);
-        setTimeout(() => {
-          if (
-            !tradeWsRef.current ||
-            tradeWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupTradeWebSocket();
-          }
-        }, 5000);
+        // Only reconnect if we're still on the Chart tab
+          setTimeout(() => {
+            if (
+              !tradeWsRef.current ||
+              tradeWsRef.current.readyState === WebSocket.CLOSED
+            ) {
+              setupTradeWebSocket();
+            }
+          }, 5000);
       };
 
       tradeWsRef.current = ws;
@@ -448,14 +449,15 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
       ws.onclose = (event) => {
         console.log("Kline WebSocket closed:", event.code, event.reason);
-        setTimeout(() => {
-          if (
-            !klineWsRef.current ||
-            klineWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupKlineWebSocket();
-          }
-        }, 5000);
+        // Only reconnect if we're still on the Chart tab
+          setTimeout(() => {
+            if (
+              !klineWsRef.current ||
+              klineWsRef.current.readyState === WebSocket.CLOSED
+            ) {
+              setupKlineWebSocket();
+            }
+          }, 5000);
       };
 
       klineWsRef.current = ws;
@@ -498,14 +500,15 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
       ws.onclose = (event) => {
         console.log("Depth WebSocket closed:", event.code, event.reason);
-        setTimeout(() => {
-          if (
-            !depthWsRef.current ||
-            depthWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupDepthWebSocket();
-          }
-        }, 5000);
+        // Only reconnect if we're still on the Chart tab
+          setTimeout(() => {
+            if (
+              !depthWsRef.current ||
+              depthWsRef.current.readyState === WebSocket.CLOSED
+            ) {
+              setupDepthWebSocket();
+            }
+          }, 5000);
       };
 
       depthWsRef.current = ws;
@@ -517,12 +520,11 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
   // Load data when timeframe changes
   useEffect(() => {
       fetchHistoricalData();
-    
   }, [timeframe]);
 
   // Setup WebSockets when on Chart tab
   useEffect(() => {
-    setupWebSockets();
+      setupWebSockets();
     return () => {
       // Cleanup WebSockets when component unmounts or tab changes
       cleanupWebSockets();
@@ -537,6 +539,8 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     { value: "4h", label: "4h" },
     { value: "1d", label: "1D" },
   ];
+
+  const tabs = ["Chart", "Info"];
 
   const getPriceChange = () => {
     if (candleData.length < 2) return { change: 0, percent: 0 };
@@ -571,34 +575,10 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       <Header />
 
       <div className="container mx-auto p-2">
+
         <div>
-        {/* Top Navigation Tabs */}
-        <div className="flex border-b border-[rgb(53,59,70)]  bg-[rgb(24,26,31)] p-1 lg:p-2 rounded-t-sm md:rounded-t-md lg:rounded-t-lg">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setSelectedTab(tab)}
-              className={`px-4 py-2 font-medium ${
-                selectedTab === tab
-                  ? "text-[rgb(108,244,239)] border-b-2 border-[rgb(108,244,239)]"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div className={selectedTab != "Chart" ? "hidden" : "block"}>
-          {/* Error Display */}
-          {/* {chartError && (
-              <div className="bg-red-600 text-white p-3 rounded mb-4">
-                {chartError}
-              </div>
-            )} */}
-
           {/* Chart Header */}
-          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-b-sm md:rounded-b-md lg:rounded-b-lg mb-2 w-full">
+          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
             <div className="flex flex-col md:flex-row justify-between items-center flex-1  ">
               <div className="grid  grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
                 <div>
@@ -630,20 +610,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            <div className="flex items-center w-full  justify-between md:justify-start space-x-2 mt-4 md:mt-0">
-              {/* Timeframe Buttons */}
-              <div className="flex bg-gray-800 rounded p-1">
-                {timeframes.map((tf) => (
-                  <button
-                    key={tf.value}
-                    onClick={() => setTimeframe(tf.value)}
-                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${
-                      timeframe === tf.value
-                        ? "bg-gray-600"
-                        : "hover:bg-gray-700"
                 <div className="text-sm w-full">
                   <div className="flex space-x-4  w-full">
                     <span className="text-xs lg:text-sm">
