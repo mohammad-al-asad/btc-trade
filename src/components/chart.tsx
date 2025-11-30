@@ -19,10 +19,8 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     bids: [],
     asks: [],
   });
-  const [recentTrades, setRecentTrades] = useState<any[]>([]);
   const [timeframe, setTimeframe] = useState("1d");
   const [isConnected, setIsConnected] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("Chart");
   const [chartError, setChartError] = useState<string | null>(null);
   const [isChartInitialized, setIsChartInitialized] = useState(false);
 
@@ -56,13 +54,11 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   // Reinitialize charts when tab changes back to Chart
   useEffect(() => {
-    if (selectedTab === "Chart" && !isChartInitialized) {
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         initializeCharts();
       }, 100);
-    }
-  }, [selectedTab, isChartInitialized]);
+  }, [isChartInitialized]);
 
   const initializeCharts = () => {
     if (!chartContainerRef.current || isChartInitialized) return;
@@ -339,20 +335,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
             setPreviousPrice(prev);
             return modifedPrice;
           });
-
-          // setRecentTrades((prev) => {
-          //   const newTrades = [
-          //     {
-          //       id: data.t,
-          //       price: latestPrice,
-          //       quantity: parseFloat(data.q),
-          //       time: new Date(data.T).toLocaleTimeString(),
-          //       isBuyerMaker: data.m,
-          //     },
-          //     ...prev.slice(0, 9),
-          //   ];
-          //   return newTrades;
-          // });
         } catch (error) {
           console.error("Error processing trade data:", error);
         }
@@ -368,7 +350,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
         console.log("Trade WebSocket disconnected:", event.code, event.reason);
         setIsConnected(false);
         // Only reconnect if we're still on the Chart tab
-        if (selectedTab === "Chart") {
           setTimeout(() => {
             if (
               !tradeWsRef.current ||
@@ -377,7 +358,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
               setupTradeWebSocket();
             }
           }, 5000);
-        }
       };
 
       tradeWsRef.current = ws;
@@ -470,7 +450,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onclose = (event) => {
         console.log("Kline WebSocket closed:", event.code, event.reason);
         // Only reconnect if we're still on the Chart tab
-        if (selectedTab === "Chart") {
           setTimeout(() => {
             if (
               !klineWsRef.current ||
@@ -479,7 +458,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
               setupKlineWebSocket();
             }
           }, 5000);
-        }
       };
 
       klineWsRef.current = ws;
@@ -523,7 +501,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onclose = (event) => {
         console.log("Depth WebSocket closed:", event.code, event.reason);
         // Only reconnect if we're still on the Chart tab
-        if (selectedTab === "Chart") {
           setTimeout(() => {
             if (
               !depthWsRef.current ||
@@ -532,7 +509,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
               setupDepthWebSocket();
             }
           }, 5000);
-        }
       };
 
       depthWsRef.current = ws;
@@ -543,25 +519,17 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   // Load data when timeframe changes
   useEffect(() => {
-    if (selectedTab === "Chart") {
       fetchHistoricalData();
-    }
-  }, [timeframe, selectedTab]);
+  }, [timeframe]);
 
   // Setup WebSockets when on Chart tab
   useEffect(() => {
-    if (selectedTab === "Chart") {
       setupWebSockets();
-    } else {
-      // Cleanup WebSockets when not on Chart tab
-      cleanupWebSockets();
-    }
-
     return () => {
       // Cleanup WebSockets when component unmounts or tab changes
       cleanupWebSockets();
     };
-  }, [selectedTab, timeframe]);
+  }, [timeframe]);
 
   const timeframes = [
     { value: "1m", label: "1m" },
@@ -607,33 +575,10 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       <Header />
 
       <div className="container mx-auto p-2">
-        {/* Top Navigation Tabs */}
-        <div className="flex border-b border-[rgb(53,59,70)]  bg-[rgb(24,26,31)] p-1 lg:p-2 rounded-t-sm md:rounded-t-md lg:rounded-t-lg">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setSelectedTab(tab)}
-              className={`px-4 py-2 font-medium ${
-                selectedTab === tab
-                  ? "text-[rgb(108,244,239)] border-b-2 border-[rgb(108,244,239)]"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
 
-        <div className={selectedTab != "Chart" ? "hidden" : "block"}>
-          {/* Error Display */}
-          {/* {chartError && (
-              <div className="bg-red-600 text-white p-3 rounded mb-4">
-                {chartError}
-              </div>
-            )} */}
-
+        <div>
           {/* Chart Header */}
-          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-b-sm md:rounded-b-md lg:rounded-b-lg mb-2 w-full">
+          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
             <div className="flex flex-col md:flex-row justify-between items-center flex-1  ">
               <div className="grid  grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
                 <div>
@@ -825,7 +770,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
             </div>
           </div>
         </div>
-        {selectedTab == "Info" && <BitcoinInfo />}
       </div>
     </div>
   );
