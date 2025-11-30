@@ -8,113 +8,48 @@ import { useCurrentUser } from "../lib/hook";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
+import Spot from "./spot";
+import Future from "./future";
 const TradePanel = ({ price }: { price: number }) => {
   const [quantity, setQuantity] = useState<any>(1);
-
-  const { data } = useQuery({
-    queryKey: ["btc-price"],
-    queryFn: getUserAssets,
-    refetchInterval: 1000,
-  });
-
-  const user = useCurrentUser();
-  const router = useRouter();
-
-  const { enqueueSnackbar } = useSnackbar();
-
-  const trade = async (tradeType: string) => {
-    if (!user) {
-      router.push("/auth/signin");
-    }
-    const response = await fetch("/api/trade", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        amount: quantity,
-        token: "BTC",
-        tradeAction: tradeType,
-        price: price,
-      }),
-    });
-    const data = await response.json();
-    if (data?.error) {
-      enqueueSnackbar(data.error, { variant: "error" });
-    }
-    if (data?.payload) {
-      enqueueSnackbar("Order Created", { variant: "success" });
-    }
-  };
+  const [tabs, setTabs] = useState<"SPOT" | "FUTURE">("SPOT");
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4 ">Trade</h3>
+    <div className="bg-[rgb(24,26,31)] border border-[#1f2328] rounded-lg ">
+      <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4 p-2 lg:p-4">
+        Trade
+      </h3>
 
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">
-            Quantity (USDT)
-          </label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm"
-            step="0.001"
-            min="0.001"
-          />
-        </div>
-        {user && data && (
-          <AssetLabels
-            usdt={data.payload.usdt.amount}
-            btc={(+data.payload.btc.amount).toFixed(20)}
-          />
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => trade("BUY")}
-            className="bg-green-600 cursor-pointer hover:bg-green-700 rounded py-2 font-semibold transition-colors text-sm"
-          >
-            BUY
-          </button>
-          <button
-            onClick={() => trade("SELL")}
-            className="bg-red-600 cursor-pointer hover:bg-red-700 rounded py-2 font-semibold transition-colors text-sm"
-          >
-            SELL
-          </button>
-        </div>
-
-        <div className="text-sm text-gray-400 text-center">
-          Est. BTC: ₿{(quantity / price).toFixed(20)}
-        </div>
+      <div className="px-1.5 md:px-2 py-1 scroll-hide flex gap-2 flex-none max-w-full overflow-auto border-b border-b-[rgb(53,59,70)] mb-2 lg:my-3">
+        <button
+          onClick={() => setTabs("SPOT")}
+          className={`cursor-pointer relative w-fit px-1 py-1 text-sm font-semibold ${
+            tabs == "SPOT" ? "text-white " : "text-[rgb(148,154,164)]"
+          } `}
+        >
+          SPOT
+          {tabs == "SPOT" && (
+            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-[rgb(108,244,239)]"></div>
+          )}
+        </button>
+        <button
+          onClick={() => setTabs("FUTURE")}
+          className={`cursor-pointer w-fit relative px-1 py-1 text-sm font-semibold  ${
+            tabs == "FUTURE" ? "text-white " : "text-[rgb(148,154,164)]"
+          } `}
+        >
+          FUTURE
+          {tabs == "FUTURE" && (
+            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-[rgb(108,244,239)]"></div>
+          )}
+        </button>
+        
       </div>
+
+      {tabs == "SPOT" && <Spot />}
+      {tabs == "FUTURE" && <Future />}
     </div>
   );
 };
 
 export default TradePanel;
-
-const AssetLabels = ({ usdt, btc }: { usdt: number; btc: string }) => {
-  return (
-    <div className="space-y-1.5 sticky bottom-0">
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-gray-300">Avbl (USDT)</span>
-        {/* <span>{data.payload.usdt}</span> */}
-        <span className="text-xs text-white font-medium flex gap-1">
-          ${usdt}
-          <Link href="/deposit">
-            <AiFillPlusCircle className="text-green-500" />
-          </Link>
-        </span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-gray-300">Avbl (BTC)</span>
-        <span className="text-xs text-white font-medium">₿{btc}</span>
-        {/* <span>{data.payload.btc}</span> */}
-      </div>
-    </div>
-  );
-};
