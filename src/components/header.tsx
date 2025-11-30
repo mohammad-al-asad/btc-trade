@@ -10,7 +10,7 @@ import { signOut } from "next-auth/react";
 const Header = () => {
   const user = useCurrentUser();
   return (
-    <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-2 md:py-4 ">
+    <header className="flex items-center  bg-[rgb(24,26,31)] px-4 md:px-10 lg:px-16 justify-between py-2 md:py-4 ">
       <Link href="/" className="flex items-center gap-3">
         <Image
           src={logo}
