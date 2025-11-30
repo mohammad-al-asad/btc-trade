@@ -6,14 +6,16 @@ export default function Home() {
   const [btcModify, setBtcModify] = useState();
   useEffect(() => {
     const loadBtcData = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
+      );
       const { modifyData } = await res.json();
 
       setBtcModify(modifyData.adjustment);
     };
     loadBtcData();
   }, []);
-  if (!btcModify) return null;
+  if (btcModify != 0 && !btcModify) return null;
   return (
     <div>
       <Chart btcModify={btcModify} />

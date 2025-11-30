@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
@@ -10,7 +11,7 @@ export default function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
-    deviceName: ""
+    deviceName: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,7 +20,7 @@ export default function SignUp() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -45,41 +46,44 @@ export default function SignUp() {
       // Get user agent for device whitelisting
       const userAgent = navigator.userAgent;
 
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
           password: formData.password,
-          deviceName: formData.deviceName || `${navigator.platform} - ${navigator.userAgent.split(' ')[0]}`,
-          userAgent: userAgent
+          deviceName:
+            formData.deviceName ||
+            `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
+          userAgent: userAgent,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Something went wrong');
+        throw new Error(data.error || "Something went wrong");
       }
 
       // Auto sign in after successful registration
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('Account created but sign in failed. Please try signing in manually.');
+        setError(
+          "Account created but sign in failed. Please try signing in manually."
+        );
       } else {
-        router.push('/');
+        router.push("/");
       }
-
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration');
+      setError(err.message || "An error occurred during registration");
     } finally {
       setLoading(false);
     }
@@ -93,7 +97,7 @@ export default function SignUp() {
             Create your trading account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               href="/auth/signin"
               className="font-medium text-blue-400 hover:text-blue-300"
@@ -106,7 +110,10 @@ export default function SignUp() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Username
               </label>
               <input
@@ -122,7 +129,10 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Email address
               </label>
               <input
@@ -139,7 +149,10 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Password
               </label>
               <input
@@ -156,7 +169,10 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Confirm Password
               </label>
               <input
@@ -171,7 +187,6 @@ export default function SignUp() {
                 minLength={6}
               />
             </div>
-
           </div>
 
           {error && (
@@ -179,12 +194,15 @@ export default function SignUp() {
               <div className="text-sm text-red-200">{error}</div>
             </div>
           )}
-
-          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-            <h4 className="text-sm font-medium text-gray-300 mb-2">Security Notice</h4>
-            <p className="text-xs text-gray-400">
-              Your current device will be automatically whitelisted. For security reasons, 
-              you&apos;ll need to manually approve any additional devices from your account settings.
+          <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+            <p className="text-sm text-gray-300 text-center">
+              Demo credentials:
+              <br />
+              Email: maasad11914@gmail.com
+              <br />
+              Password: maasad11
+              <br />
+              Admin Panel: /protected/admin/dashbord
             </p>
           </div>
 
@@ -200,18 +218,18 @@ export default function SignUp() {
                   Creating account...
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-xs text-gray-400">
-              By creating an account, you agree to our{' '}
+              By creating an account, you agree to our{" "}
               <a href="#" className="text-blue-400 hover:text-blue-300">
                 Terms of Service
-              </a>{' '}
-              and{' '}
+              </a>{" "}
+              and{" "}
               <a href="#" className="text-blue-400 hover:text-blue-300">
                 Privacy Policy
               </a>

@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider  = "prisma-client"
-  output    = "../app/generated/prisma"
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
   // directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
@@ -17,7 +17,7 @@ datasource db {
 model User {
   id           String        @id @default(cuid())
   username     String
-  email        String      @unique
+  email        String        @unique
   password     String
   role         Role          @default(USER)
   whiteList    Whitelist[]

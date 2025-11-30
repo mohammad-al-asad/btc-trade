@@ -19,12 +19,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { adjustment } = await request.json();
-
-    if (!adjustment || typeof adjustment !== "number") {
-      return NextResponse.json(
-        { error: "Valid adjustment amount is required" },
-        { status: 400 }
-      );
+    if (adjustment != 0) {
+      if (!adjustment || typeof adjustment !== "number") {
+        return NextResponse.json(
+          { error: "Valid adjustment amount is required" },
+          { status: 400 }
+        );
+      }
     }
 
     // Get current BTC price from Binance

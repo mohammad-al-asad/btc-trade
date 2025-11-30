@@ -93,9 +93,11 @@ export default function SignIn() {
           <p className="text-sm text-gray-300 text-center">
             Demo credentials:
             <br />
-            Email: ma@ma.ma
+            Email: maasad11914@gmail.com
             <br />
             Password: maasad11
+            <br />
+            Admin Panel: /protected/admin/dashbord
           </p>
         </div>
       </div>
