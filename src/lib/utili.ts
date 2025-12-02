@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import Binance from "node-binance-api";
 import { prisma } from "./prisma";
+import { getModifiedBtc } from "./clientUtility";
+import { getBtcModifyData } from "./queries";
 export const getCurrentUser = async () => {
   const session: any = await getServerSession(authOptions);
   return session?.user || null;
@@ -10,7 +12,10 @@ export const getCurrentUser = async () => {
 export const getCurrentPrice = async () => {
   const binance = new Binance();
   const ticker = await binance.prices("BTCUSDT");
-  return ticker.BTCUSDT;
+
+  const adjustment = await getBtcModifyData();
+  console.log({adjustment})
+  return Number(getModifiedBtc(adjustment, ticker.BTCUSDT.toString()));
 };
 
 export const futureTradeAutoCancel = async () => {
@@ -28,10 +33,9 @@ export const futureTradeAutoCancel = async () => {
         ((+currenntBTCPrice.toFixed(4) - +Number(trade.entryUSDT).toFixed(4)) /
           +Number(trade.entryUSDT).toFixed(4)) *
         100;
-      0.9;
-      const diffrentOfMargin =
-        +trade.margin.toFixed(10) % (Math.abs(priceMovement) * trade.leverage);
 
+      const diffrentOfMargin =
+        ((trade.leverage * Math.abs(priceMovement)) / 100) * +trade.margin;
       if (priceMovement != 0) {
         if (trade.trade == "LONG") {
           if (priceMovement < 0) {

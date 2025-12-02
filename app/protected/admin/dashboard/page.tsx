@@ -217,7 +217,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-semibold text-[#9aa3b2]">
               Pending Deposits
             </h3>
-            <p className="text-3xl font-bold text-blue-400">
+            <p className="text-3xl font-bold text-green">
               {stats.pendingDeposits}
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-semibold text-[#9aa3b2]">
               Pending Withdrawals
             </h3>
-            <p className="text-3xl font-bold text-red-400">
+            <p className="text-3xl font-bold text-red">
               {stats.pendingWithdrawals}
             </p>
           </div>
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab("transactions")}
             className={`px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === "transactions"
-                ? "bg-blue-600 text-white"
+                ? "bg-main text-black"
                 : "bg-[#0f1113]/60 border border-[#222] text-[#9aa3b2] hover:bg-[#1a1d21]"
             }`}
           >
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab("price")}
             className={`px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === "price"
-                ? "bg-blue-600 text-white"
+                ? "bg-main text-black"
                 : "bg-[#0f1113]/60 border border-[#222] text-[#9aa3b2] hover:bg-[#1a1d21]"
             }`}
           >
@@ -400,7 +400,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={processing === "price"}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                  className="bg-main hover:bg-[rgb(89,202,198)] disabled:bg-[rgb(63,142,139)] text-black font-semibold py-2 px-6 rounded-lg transition-colors"
                 >
                   {processing === "price" ? "Processing..." : "Adjust Price"}
                 </button>

@@ -9,6 +9,8 @@ import { RiLuggageDepositLine } from "react-icons/ri";
 import { BiMoneyWithdraw } from "react-icons/bi";
 import { IoLogOut } from "react-icons/io5";
 import profile from "@/public/profile.png";
+import { getCurrentPrice } from "@/src/lib/utili";
+import { usePrice } from "@/src/lib/store";
 
 interface AssetItem {
   id: string;
@@ -48,6 +50,7 @@ export default function ProfilePage() {
   const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "BTC">(
     "USD"
   );
+        
 
   // NOTE: If you use external avatars (https://avatar.iran.liara.run),
   // add the domain in next.config.js:
@@ -105,15 +108,11 @@ export default function ProfilePage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
       );
-      const btcResponse = await fetch(
-        "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-      );
-      if (!btcResponse.ok && !res.ok) return null;
+      const price = await fetch("/api/btc-cur-price").then(res=>res.json()).then(data=>Number(data.price));
+
 
       const { modifyData } = await res.json();
-      const btcData = await btcResponse.json();
 
-      const price = parseFloat(btcData.price);
       const btcModifyFloat = parseFloat(modifyData.adjustment);
       let currentBtcPrice: number;
       if (btcModifyFloat < 0) {

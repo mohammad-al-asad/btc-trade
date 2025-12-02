@@ -94,6 +94,7 @@ model PriceAdjustment {
 enum FutureTradeStatus {
   RUNNING
   CANCELLED
+  ENDED
 }
 enum FutureTradeType{
   LONG

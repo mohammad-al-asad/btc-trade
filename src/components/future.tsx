@@ -1,23 +1,26 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LeverageRange from "./leverage-range";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AvblAssets from "./avbl-assets";
 import { usePrice } from "../lib/store";
 import { useSnackbar } from "notistack";
+import { useQuery } from "@tanstack/react-query";
+import { getUserAssets } from "../lib/queries";
 const Future = () => {
   const { price: btcCurrentPrice } = usePrice((state) => state);
   const [tradeType, setTradeType] = useState<"MARKET" | "SPORT">("MARKET");
 
   const [leverage, setLeverage] = useState<number>(5);
   const [margin, setMargin] = useState<number>(1);
+  const [cost, setCost] = useState<number>(0);
   const { enqueueSnackbar } = useSnackbar();
   const handleTrade = async (trade: "SHORT" | "LONG") => {
     const response = await fetch("api/trade/future", {
       method: "POST",
       body: JSON.stringify({
         leverage,
-        margin,
+        margin: cost / btcCurrentPrice,
         trade,
         btcCurrentPrice,
       }),
@@ -29,6 +32,18 @@ const Future = () => {
       enqueueSnackbar("Order Created", { variant: "success" });
     }
   };
+
+  const { data } = useQuery({
+    queryKey: ["btc-price"],
+    queryFn: getUserAssets,
+    refetchInterval: 1000,
+  });
+
+  useEffect(() => {
+    if (margin && btcCurrentPrice && leverage) {
+      setCost(+((btcCurrentPrice * margin) / leverage).toFixed(2));
+    }
+  }, [margin, btcCurrentPrice, leverage]);
 
   return (
     <div className="p-1.5 lg:p-3">
@@ -66,16 +81,24 @@ const Future = () => {
           htmlFor=""
           className="text-xs lg:text-sm  mb-1 text-gray-400 block"
         >
-          Margin
+          Amount
         </label>
         <div className="relative flex justify-between items-center border-[rgb(69,76,89)] border rounded-lg">
           <input
             value={margin}
             onChange={(e: any) => setMargin(e.target.value)}
             type="number"
-            placeholder="Amount in BDT"
+            placeholder="Amount in BTC"
             className="px-3 py-2  text-sm flex-1 text-white placeholder:text-[rgb(87,94,108)] border-none outline-none"
           />
+          {/* {data && (
+            <button
+              onClick={() => setMargin(Number(data.payload.btc.amount))}
+              className="top-1/2 absolute -translate-y-1/2 right-18 cursor-pointer text-main text-semibold text-xs"
+            >
+              Max
+            </button>
+          )} */}
           <button className="w-fit px-4 text-white text-[11px] flex gap-1 items-center cursor-pointer ">
             BTC <IoMdArrowDropdown className="text-white w-3 h-3" />
           </button>
@@ -85,7 +108,7 @@ const Future = () => {
       <AvblAssets hide="USDT" />
       <div className="flex justify-between items-center mt-1">
         <span className="text-xs text-gray-300">Cost</span>
-        <span className="text-xs text-white font-medium">$100</span>
+        <span className="text-xs text-white font-medium">${cost}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 mt-3 lg:mt-4">
@@ -97,7 +120,7 @@ const Future = () => {
         </button>
         <button
           onClick={() => handleTrade("SHORT")}
-          className="bg-[#f6465d] cursor-pointer hover:bg-[#f64646] rounded py-2 font-semibold transition-colors text-sm"
+          className="bg-red cursor-pointer hover:bg-[#f64646] rounded py-2 font-semibold transition-colors text-sm"
         >
           Short
         </button>

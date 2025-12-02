@@ -194,18 +194,6 @@ export default function SignUp() {
               <div className="text-sm text-red-200">{error}</div>
             </div>
           )}
-          <div className="mt-6 p-4 bg-gray-700 rounded-lg">
-            <p className="text-sm text-gray-300 text-center">
-              Demo credentials:
-              <br />
-              Email: maasad11914@gmail.com
-              <br />
-              Password: maasad11
-              <br />
-              Admin Panel: /protected/admin/dashbord
-            </p>
-          </div>
-
           <div>
             <button
               type="submit"

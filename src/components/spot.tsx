@@ -77,7 +77,7 @@ const Spot = () => {
         </button>
         <button
           onClick={() => trade("SELL")}
-          className="bg-[#f6465d] cursor-pointer hover:bg-[#f64646] rounded py-2 font-semibold transition-colors text-sm"
+          className="bg-red cursor-pointer hover:bg-[#f64646] rounded py-2 font-semibold transition-colors text-sm"
         >
           SELL
         </button>
