@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
 import { getModifiedBtc } from "@/src/lib/clientUtility";
+import { getCurrentPrice } from "@/src/lib/utili";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,12 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current BTC price from Binance
-    const btcResponse = await fetch(
-      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-    );
-    const btcData = await btcResponse.json();
-    const currentPrice = parseFloat(btcData.price);
-    const newPrice = getModifiedBtc(adjustment.toString(), btcData.price);
+    const price = await getCurrentPrice();
+    const newPrice = getModifiedBtc(adjustment.toString(), price.toString());
 
     // Record the price adjustment
     await prisma.priceAdjustment.create({
@@ -45,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: "BTC price adjusted successfully",
-      previousPrice: currentPrice,
+      previousPrice: price,
       newPrice: newPrice,
       adjustment: adjustment,
     });
@@ -87,11 +84,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get current BTC price
-    const btcResponse = await fetch(
-      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-    );
-    const btcData = await btcResponse.json();
-    const currentPrice = parseFloat(btcData.price);
+    const currentPrice = await getCurrentPrice();
 
     return NextResponse.json({
       currentPrice,

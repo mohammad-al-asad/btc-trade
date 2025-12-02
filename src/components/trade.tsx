@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserAssets } from "../lib/queries";
 import { AiFillPlusCircle } from "react-icons/ai";
 import { useCurrentUser } from "../lib/hook";
+import { RiFileHistoryFill } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
@@ -15,10 +16,14 @@ const TradePanel = ({ price }: { price: number }) => {
   const [tabs, setTabs] = useState<"SPOT" | "FUTURE">("SPOT");
 
   return (
-    <div className="bg-[rgb(24,26,31)] border border-[#1f2328] rounded-lg ">
-      <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4 p-2 lg:p-4">
+    <div className="bg-bg border border-[#1f2328] rounded-lg relative">
+      <h3 className="text-base lg:text-lg font-semibold mb-2  p-2 lg:p-4 pb-1.5!">
         Trade
       </h3>
+
+      <Link href={"/history"} className="md:hidden top-5 right-5 absolute">
+        <RiFileHistoryFill className="w-5 h-5" />
+      </Link>
 
       <div className="px-1.5 md:px-2 py-1 scroll-hide flex gap-2 flex-none max-w-full overflow-auto border-b border-b-[rgb(53,59,70)] mb-2 lg:my-3">
         <button
@@ -43,7 +48,6 @@ const TradePanel = ({ price }: { price: number }) => {
             <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-[rgb(108,244,239)]"></div>
           )}
         </button>
-        
       </div>
 
       {tabs == "SPOT" && <Spot />}

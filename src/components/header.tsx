@@ -6,16 +6,22 @@ import Image from "next/image";
 import { FaUser } from "react-icons/fa";
 import logo from "../../public/logo.avif";
 import { signOut } from "next-auth/react";
+import { IoLogOut } from "react-icons/io5";
 
 const Header = () => {
   const user = useCurrentUser();
   return (
-    <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-2 md:py-3 ">
+    <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-4 md:py-3 ">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-3">
-        <Image src={logo} alt="Trading" width={80} className="w-[50px]" />
+        <Image
+          src={logo}
+          alt="Trading"
+          width={80}
+          className="w-[35px] md:w-[50px]"
+        />
         <div className="text-main font-serif">
-          <h1 className="font-bold text-2xl">SORA</h1>
+          <h1 className="font-bold text-xl md:text-2xl">SORA</h1>
           <p className="text-[9px] leading-2">The funded account</p>
         </div>
       </Link>
@@ -66,11 +72,33 @@ const AuthButton = () => {
 
 const Logout = () => {
   return (
-    <button
-      onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-      className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors ml-1"
-    >
-      Sign Out
-    </button>
+    <>
+      <button
+        title="Sign out"
+        onClick={() => signOut()}
+        className="
+        md:hidden
+        p-1.5 rounded-full
+        bg-[#141414]/60
+        border border-[#2b2b2b]
+        backdrop-blur-sm
+        shadow-md
+        transition-all duration-300
+        hover:bg-red-600/20
+        hover:border-red-500
+        hover:shadow-red-500/30
+        hover:scale-105
+        ml-3
+      "
+      >
+        <IoLogOut className="w-4 h-4 text-gray-300 group-hover:text-white" />
+      </button>
+      <button
+        onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+        className="bg-red-600 md:block hidden hover:bg-red-700 text-white text-sm px-3 py-1 rounded transition-colors ml-1"
+      >
+        Sign Out
+      </button>
+    </>
   );
 };

@@ -54,10 +54,10 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   // Reinitialize charts when tab changes back to Chart
   useEffect(() => {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        initializeCharts();
-      }, 100);
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      initializeCharts();
+    }, 100);
   }, [isChartInitialized]);
 
   const initializeCharts = () => {
@@ -350,14 +350,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
         console.log("Trade WebSocket disconnected:", event.code, event.reason);
         setIsConnected(false);
         // Only reconnect if we're still on the Chart tab
-          setTimeout(() => {
-            if (
-              !tradeWsRef.current ||
-              tradeWsRef.current.readyState === WebSocket.CLOSED
-            ) {
-              setupTradeWebSocket();
-            }
-          }, 5000);
+        setTimeout(() => {
+          if (
+            !tradeWsRef.current ||
+            tradeWsRef.current.readyState === WebSocket.CLOSED
+          ) {
+            setupTradeWebSocket();
+          }
+        }, 5000);
       };
 
       tradeWsRef.current = ws;
@@ -450,14 +450,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onclose = (event) => {
         console.log("Kline WebSocket closed:", event.code, event.reason);
         // Only reconnect if we're still on the Chart tab
-          setTimeout(() => {
-            if (
-              !klineWsRef.current ||
-              klineWsRef.current.readyState === WebSocket.CLOSED
-            ) {
-              setupKlineWebSocket();
-            }
-          }, 5000);
+        setTimeout(() => {
+          if (
+            !klineWsRef.current ||
+            klineWsRef.current.readyState === WebSocket.CLOSED
+          ) {
+            setupKlineWebSocket();
+          }
+        }, 5000);
       };
 
       klineWsRef.current = ws;
@@ -501,14 +501,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       ws.onclose = (event) => {
         console.log("Depth WebSocket closed:", event.code, event.reason);
         // Only reconnect if we're still on the Chart tab
-          setTimeout(() => {
-            if (
-              !depthWsRef.current ||
-              depthWsRef.current.readyState === WebSocket.CLOSED
-            ) {
-              setupDepthWebSocket();
-            }
-          }, 5000);
+        setTimeout(() => {
+          if (
+            !depthWsRef.current ||
+            depthWsRef.current.readyState === WebSocket.CLOSED
+          ) {
+            setupDepthWebSocket();
+          }
+        }, 5000);
       };
 
       depthWsRef.current = ws;
@@ -519,12 +519,12 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   // Load data when timeframe changes
   useEffect(() => {
-      fetchHistoricalData();
+    fetchHistoricalData();
   }, [timeframe]);
 
   // Setup WebSockets when on Chart tab
   useEffect(() => {
-      setupWebSockets();
+    setupWebSockets();
     return () => {
       // Cleanup WebSockets when component unmounts or tab changes
       cleanupWebSockets();
@@ -551,7 +551,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
   const priceChange = getPriceChange();
 
-  const { setPrice: setGolbalPrice } = usePrice((state:any) => state);
+  const { setPrice: setGolbalPrice } = usePrice((state: any) => state);
   useEffect(() => {
     if (price) {
       setGolbalPrice(price);
@@ -573,10 +573,9 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       <Header />
 
       <div className="container mx-auto p-2">
-
         <div>
           {/* Chart Header */}
-          <div className="bg-[rgb(24,26,31)]  p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
+          <div className="bg-bg  p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
             <div className="flex flex-col md:flex-row justify-between items-center flex-1  ">
               <div className="grid  grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
                 <div>
@@ -637,9 +636,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                   </div>
                   <div
                     className={`font-semibold text-[10px] lg:text-xs ${
-                      priceChange.change >= 0
-                        ? "text-[#0ecb81]"
-                        : "text-[#f6465d]"
+                      priceChange.change >= 0 ? "text-green" : "text-red"
                     }`}
                   >
                     {priceChange.change >= 0 ? "+" : ""}
@@ -709,17 +706,15 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                 className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden"
               />
 
-              {!isChartInitialized && !chartError && (
+              {/* {!isChartInitialized && !chartError && (
                 <div className="text-center text-gray-400 py-8">
                   Initializing chart...
                 </div>
-              )}
+              )} */}
 
-              <div className="mt-2 lg:mt-4 text-xs text-gray-400 text-center">
-                {new Date().toLocaleTimeString()} UTC
+              <div className="border-[#1f2328] border rounded-md overflow-hidden hidden md:block mt-2">
+                <TradeHistory />
               </div>
-
-              <TradeHistory />
             </div>
 
             {/* Sidebar - 1/4 width */}
@@ -727,43 +722,47 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
               <TradePanel price={Number(price)} />
 
               {/* Order Book */}
-              <div className="bg-[rgb(24,26,31)] rounded-lg p-4 border border-[#1f2328]">
-                <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
-                  Order Book
-                </h3>
+              <div className="h-[440px] overflow-y-auto">
+                <div className="bg-bg rounded-lg p-4 border border-[#1f2328] max-h-[500px] h-[500px]! overflow-hidden">
+                  <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
+                    Order Book
+                  </h3>
 
-                <div className="space-y-1 text-xs">
-                  {orderBook.asks.map((ask: any, index: number) => (
-                    <div
-                      key={index}
-                      className="flex justify-between text-[#f6465d]"
-                    >
-                      <span>{ask.price.toFixed(2)}</span>
-                      <span>{ask.quantity.toFixed(6)}</span>
+                  <div className="space-y-1 text-xs">
+                    {orderBook.asks.map((ask: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex justify-between text-red"
+                      >
+                        <span>{ask.price.toFixed(2)}</span>
+                        <span>{ask.quantity.toFixed(6)}</span>
+                      </div>
+                    ))}
+
+                    <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
+                      Spread:
+                      {orderBook.bids.length > 0 && orderBook.asks.length > 0
+                        ? (
+                            ((orderBook.asks[0].price -
+                              orderBook.bids[0].price) /
+                              orderBook.bids[0].price) *
+                            100
+                          ).toFixed(4) + "%"
+                        : "0%"}
                     </div>
-                  ))}
 
-                  <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
-                    Spread:
-                    {orderBook.bids.length > 0 && orderBook.asks.length > 0
-                      ? (
-                          ((orderBook.asks[0].price - orderBook.bids[0].price) /
-                            orderBook.bids[0].price) *
-                          100
-                        ).toFixed(4) + "%"
-                      : "0%"}
+                    {orderBook.bids.map((bid: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex justify-between text-green"
+                      >
+                        <span>{bid.price.toFixed(2)}</span>
+                        <span>{bid.quantity.toFixed(6)}</span>
+                      </div>
+                    ))}
                   </div>
-
-                  {orderBook.bids.map((bid: any, index: number) => (
-                    <div
-                      key={index}
-                      className="flex justify-between text-[#0ecb81]"
-                    >
-                      <span>{bid.price.toFixed(2)}</span>
-                      <span>{bid.quantity.toFixed(6)}</span>
-                    </div>
-                  ))}
                 </div>
+                
               </div>
             </div>
           </div>

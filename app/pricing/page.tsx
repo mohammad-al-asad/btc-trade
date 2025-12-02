@@ -2,7 +2,7 @@
 
 import { Check, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
-
+import { IoArrowBack } from "react-icons/io5";
 export default function FundedAccountsPage() {
   const packs = [
     // Original Plans
@@ -121,8 +121,9 @@ export default function FundedAccountsPage() {
           <div className="flex gap-4 text-sm">
             <Link
               href="/"
-              className="text-gray-300 hover:text-main transition-all"
+              className="text-gray-300 hover:text-main transition-all flex items-center gap-0.5"
             >
+              <IoArrowBack />
               Go Home
             </Link>
           </div>

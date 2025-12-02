@@ -24,6 +24,8 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "Balance Mismatch" }, { status: 400 });
     }
 
+    console.log({btcCurrentPrice})
+
     await prisma.futureTrade.create({
       data: {
         trade,
