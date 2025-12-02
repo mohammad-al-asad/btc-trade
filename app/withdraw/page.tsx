@@ -120,11 +120,11 @@ export default function WithdrawPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Processing Time</span>
-              <span>1-3 business days</span>
+              <span>1-2 hours</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Withdrawal Fee</span>
-              <span>1% (min $1.00)</span>
+              <span>0%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Minimum Amount</span>

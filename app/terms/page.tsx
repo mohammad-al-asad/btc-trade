@@ -154,7 +154,7 @@ function Section({
     <div className="bg-[#111821] border border-white/10 rounded-2xl p-7 shadow-lg">
       <h2
         className={`text-2xl font-semibold mb-4 flex items-center gap-2 ${
-          danger ? "text-red-400" : "text-main"
+          danger ? "text-main" : "text-main"
         }`}
       >
         {icon} {title}

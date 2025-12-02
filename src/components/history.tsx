@@ -169,7 +169,7 @@ const TradingHistory = () => {
           </div>
         )}
 
-        {!data && (isLoading || isLoading2) && (
+        {!data && (isLoading || isLoading2) && user && (
           <div className="h-full flex items-center justify-center">
             <DataLoading />
           </div>
