@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionProvider from "@/src/components/SessionProvider";
 import ReactQueryProvider from "../src/components/ReactQueryProvider";
 import { ToDoProvider } from "../src/components/TodoProvider";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ToDoProvider>
-          <ReactQueryProvider>
-            <SessionProvider>{children}</SessionProvider>
-          </ReactQueryProvider>
-        </ToDoProvider>
+        <Suspense>
+          <ToDoProvider>
+            <ReactQueryProvider>
+              <SessionProvider>{children}</SessionProvider>
+            </ReactQueryProvider>
+          </ToDoProvider>
+        </Suspense>
       </body>
     </html>
   );
