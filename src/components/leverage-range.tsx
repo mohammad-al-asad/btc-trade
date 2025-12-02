@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const LeverageRange = ({
   onValueChange,
@@ -8,45 +8,43 @@ const LeverageRange = ({
   onValueChange: (value: number) => void;
 }) => {
   const [value, setValue] = useState(1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Labels: 10, 20, 30 ... 100
-  const labels = Array.from({ length: 10 }, (_, i) => (i + 1) * 10);
+  // Labels now match the full 150 range → 10, 20, 30 ... 150
+  const labels = Array.from({ length: 15 }, (_, i) => (i + 1) * 10);
 
   useEffect(() => {
-    const sheet: any = document.getElementById("dynamic-range-style");
+    const input = inputRef.current;
+    if (!input) return;
 
-    const percent = ((value - 1) / (150 - 1)) * 100; // correct 1–150 scaling
-    const prefs = [
-      "webkit-slider-runnable-track",
-      "moz-range-track",
-      "ms-track",
-    ];
+    const min = Number(input.min ?? 1);
+    const max = Number(input.max ?? 150);
+    const currentValue = Number(value);
 
-    let style = "";
+    // correct percentage of the slider
+    const percent = ((currentValue - min) / (max - min)) * 100;
 
-    prefs.forEach((p) => {
-      style += `
-        .range {
-          background: linear-gradient(to right, #37adbf 0%, #37adbf ${percent}%, #fff ${percent}%, #fff 100%);
-        }
-        .range input::-${p} {
-          background: linear-gradient(to right, #37adbf 0%, #37adbf ${percent}%, #b2b2b2 ${percent}%, #b2b2b2 100%);
-        }
-      `;
-    });
+    // apply gradient directly on the range input
+    input.style.background = `
+      linear-gradient(
+        to right,
+        #37adbf 0%,
+        #37adbf ${percent}%,
+        #b2b2b2 ${percent}%,
+        #b2b2b2 100%
+      )
+    `;
 
-    sheet.textContent = style;
-    if (value) {
-      onValueChange(value);
-    }
-  }, [value]);
+    onValueChange(currentValue);
+  }, [value, onValueChange]);
 
   return (
     <div>
       <style id="dynamic-range-style"></style>
 
-      <div className="range bg-red-600!">
+      <div className="range">
         <input
+          ref={inputRef}
           type="range"
           min="1"
           max="150"
@@ -57,17 +55,16 @@ const LeverageRange = ({
         />
       </div>
 
-      {/* Number Labels: 10, 20, 30 ... 100 */}
       <ul className="range-labels">
         {labels.map((num, i) => (
           <li
             key={i}
-            className={`text-[10px] ${value === num ? "active selected" : ""} ${
-              value > num ? "selected" : ""
-            }`}
+            className={`text-[10px] ${
+              value === num ? "active selected" : ""
+            } ${value > num ? "selected" : ""}`}
             onClick={() => setValue(num)}
           >
-            <span className="absolute -top-3"> {num}</span>
+            <span className="absolute -top-3">{num}</span>
           </li>
         ))}
       </ul>

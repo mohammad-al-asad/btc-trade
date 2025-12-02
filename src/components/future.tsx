@@ -7,7 +7,10 @@ import { usePrice } from "../lib/store";
 import { useSnackbar } from "notistack";
 import { useQuery } from "@tanstack/react-query";
 import { getUserAssets } from "../lib/queries";
+import { useCurrentUser } from "../lib/hook";
+import { useRouter } from "next/navigation";
 const Future = () => {
+  const user = useCurrentUser();
   const { price: btcCurrentPrice } = usePrice((state) => state);
   const [tradeType, setTradeType] = useState<"MARKET" | "SPORT">("MARKET");
 
@@ -15,7 +18,11 @@ const Future = () => {
   const [margin, setMargin] = useState<number>(1);
   const [cost, setCost] = useState<number>(0);
   const { enqueueSnackbar } = useSnackbar();
+
+  const router = useRouter();
+
   const handleTrade = async (trade: "SHORT" | "LONG") => {
+    if (!user) return router.push("/auth/sigin");
     const response = await fetch("api/trade/future", {
       method: "POST",
       body: JSON.stringify({
