@@ -20,7 +20,6 @@ export const GET = async (req: NextRequest) => {
     });
 
     const currentBTCPrice = await getCurrentPrice();
-    console.log({currentBTCPrice})
     const modifiedTrades = trades.map((trade: any) => {
       const priceMovement =
         ((+currentBTCPrice.toFixed(4) - +Number(trade.entryUSDT).toFixed(4)) /

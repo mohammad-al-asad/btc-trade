@@ -103,11 +103,6 @@ export async function POST(
           },
         }),
       ]);
-      console.log({
-        btcAmount: transaction.amount,
-        usdtAmount,
-        btcPrice: currentBtcPrice,
-      });
 
       return NextResponse.json({
         message: "Deposit approved successfully",
@@ -126,7 +121,7 @@ export async function POST(
       const usdtAsset = transaction.user.assets.find(
         (asset) => asset.assetName === "USDT"
       );
-      console.log(btcAsset, usdtAsset);
+
 
       if (!btcAsset || !usdtAsset) {
         return NextResponse.json(

@@ -76,7 +76,6 @@ export const PUT = async (
         assetName: "BTC",
       },
     });
-    console.log(assetUpdateData);
 
     await prisma.asset.update({
       where: { id: asset!.id },

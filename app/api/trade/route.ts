@@ -60,7 +60,6 @@ export const POST = async (req: NextRequest) => {
       const usdtAsset = userAssets.find(
         (asset) => asset.assetName == AssetName.USDT
       );
-      console.log();
       
       if (Number(amount)> Number(usdtAsset!.amount.toFixed(2))){
         return NextResponse.json({ error: "Not enogh token" }, { status: 400 });

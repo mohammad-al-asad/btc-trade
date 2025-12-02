@@ -14,7 +14,6 @@ export const getCurrentPrice = async () => {
   const ticker = await binance.prices("BTCUSDT");
 
   const adjustment = await getBtcModifyData();
-  console.log({adjustment})
   return Number(getModifiedBtc(adjustment, ticker.BTCUSDT.toString()));
 };
 

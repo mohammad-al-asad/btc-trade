@@ -269,7 +269,7 @@ export default function ProfilePage() {
 
           {/* Actions */}
           <div className="mt-5 flex gap-6 justify-center">
-            <Link href="/deposit" className="text-center">
+            <Link href="/deposit?usdt=0" className="text-center">
               <div className="w-16 h-16 rounded-full bg-[#0f1113] border border-[#2b2b2b] flex items-center justify-center">
                 <RiLuggageDepositLine className="w-6 h-6" />
               </div>

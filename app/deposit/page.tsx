@@ -1,18 +1,33 @@
 "use client";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import qr from "@/public/qr.jpg";
+import qr from "@/public/qr.jpg"; // BTC QR
+import usdtQR from "@/public/usdtQR.png"; // USDT QR
 import { FaCopy } from "react-icons/fa";
 
 export default function DepositPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [amount, setAmount] = useState("");
+
+  // Selected payment method
+  const [method, setMethod] = useState<"btc" | "usdt">("usdt");
+
+  // Deposit form states
   const [transaction, setTransaction] = useState("");
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState("");
+  const params = useSearchParams()
+  const usdt = params.get("usdt")
+  const [amount, setAmount] = useState(usdt||"0");
+  
+
+  // Addresses
+  const addresses = {
+    btc: "1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH",
+    usdt: "TH5pbgtKshyoP1XeUTF6nfuhtFN6NEcnLb",
+  };
 
   if (status === "unauthenticated") {
     router.push("/auth/signin");
@@ -35,6 +50,7 @@ export default function DepositPage() {
         body: JSON.stringify({
           amount: parseFloat(amount),
           transaction,
+          method,
         }),
       });
 
@@ -42,9 +58,7 @@ export default function DepositPage() {
 
       if (response.ok) {
         setMessage("Deposit successful! Redirecting...");
-        setTimeout(() => {
-          router.push("/profile");
-        }, 2000);
+        setTimeout(() => router.push("/profile"), 2000);
       } else {
         setMessage(result.error || "Failed to process deposit");
       }
@@ -58,10 +72,37 @@ export default function DepositPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#0d0d0d] to-black text-white">
       <div className="container mx-auto p-4 max-w-md">
-        {/* QR Code and Bitcoin Address */}
+
+        {/* Method Selector */}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => setMethod("btc")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
+              method === "btc"
+                ? "bg-main text-black border-[#222]"
+                : "bg-[#111] border-[#222] text-gray-300"
+            }`}
+          >
+            Bitcoin (BTC)
+          </button>
+
+          <button
+            onClick={() => setMethod("usdt")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
+              method === "usdt"
+                ? "bg-main text-black border-[#222]"
+                : "bg-[#111] border-[#222] text-gray-300"
+            }`}
+          >
+            USDT (TRC20)
+          </button>
+        </div>
+
+        {/* QR + Address Box */}
         <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mb-6 backdrop-blur-sm">
+
           <h3 className="text-lg font-semibold mb-4 text-center">
-            Send Bitcoin to this address
+            {method === "btc" ? "Bitcoin Address" : "USDT (TRC20) Address"}
           </h3>
 
           {/* QR Code */}
@@ -70,27 +111,22 @@ export default function DepositPage() {
               className="rounded-2xl border border-[#333]"
               width={200}
               height={200}
-              src={qr}
-              alt="deposit qr code"
+              src={method === "btc" ? qr : usdtQR}
+              alt="Deposit QR"
             />
           </div>
 
-          {/* Bitcoin Address */}
+          {/* Address */}
           <div className="text-center">
-            <p className="text-sm text-[#9aa3b2] mb-2">Bitcoin Address</p>
             <div className="relative">
               <div className="bg-[#111] border border-[#232323] rounded-lg p-3 pr-10">
                 <p className="text-sm font-mono break-all">
-                  1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH
+                  {addresses[method]}
                 </p>
               </div>
               <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    "1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH"
-                  )
-                }
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors"
+                onClick={() => navigator.clipboard.writeText(addresses[method])}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-main hover:text-blue-300 transition-colors"
                 title="Copy Address"
               >
                 <FaCopy size={16} />
@@ -102,40 +138,33 @@ export default function DepositPage() {
         {/* Deposit Form */}
         <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 backdrop-blur-sm">
           <form onSubmit={handleDeposit} className="space-y-6">
+
             <div>
               <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
-                Amount (BTC)
+                Amount ({method === "btc" ? "BTC" : "USDT"})
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-main"
                 placeholder="0.00"
-                step="0.00000001"
-                min="0.00000001"
                 required
               />
-              <p className="text-xs text-[#9aa3b2] mt-1 ml-1.5">
-                Minimum deposit: 0.00000001 BTC
-              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
-                Transaction ID
+                Transaction ID / Hash
               </label>
               <input
                 type="text"
                 value={transaction}
                 onChange={(e) => setTransaction(e.target.value)}
-                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your Bitcoin transaction ID"
+                className="w-full bg-[#111] border border-[#232323] rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-main"
+                placeholder="Enter transaction hash"
                 required
               />
-              <p className="text-xs text-[#9aa3b2] mt-1 ml-1.5">
-                Enter the Bitcoin transaction ID from your wallet
-              </p>
             </div>
 
             {message && (
@@ -158,37 +187,6 @@ export default function DepositPage() {
               {processing ? "Processing..." : "Request Deposit"}
             </button>
           </form>
-        </div>
-
-        {/* Instructions */}
-        <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mt-6 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold mb-4">Deposit Instructions</h3>
-          <div className="space-y-3 text-sm text-white">
-            <div className="flex items-start">
-              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                <span className="text-xs font-bold">1</span>
-              </div>
-              <p>Send Bitcoin to the address shown above</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                <span className="text-xs font-bold">2</span>
-              </div>
-              <p>Wait for the transaction to be confirmed on the blockchain</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                <span className="text-xs font-bold">3</span>
-              </div>
-              <p>Enter the amount and transaction ID in the form above</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                <span className="text-xs font-bold">4</span>
-              </div>
-              <p>Your deposit will be processed after admin approval</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

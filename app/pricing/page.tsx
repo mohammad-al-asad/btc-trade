@@ -4,79 +4,78 @@ import { Check, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { IoArrowBack } from "react-icons/io5";
 export default function FundedAccountsPage() {
-const packs = [
-  {
-    name: "Basic",
-    price: "$99",
-    color: "from-blue-500 to-blue-700",
-    profitShare: "95%",
-    scaling: false,
-    rules: [
-      "Account Size: $5,000",
-      "Daily Loss Limit: 2%",
-      "Maximum Loss Limit: 4%",
-      "Consistency Rule: 15%",
-      "Minimum Trading Days: 10",
-    ],
-  },
-  {
-    name: "Standard",
-    price: "$199",
-    color: "from-purple-500 to-purple-700",
-    profitShare: "95%",
-    scaling: false,
-    rules: [
-      "Account Size: $10,000",
-      "Daily Loss Limit: 2%",
-      "Maximum Loss Limit: 4%",
-      "Consistency Rule: 15%",
-      "Minimum Trading Days: 10",
-    ],
-  },
-  {
-    name: "Advanced",
-    price: "$499",
-    color: "from-amber-500 to-amber-700",
-    profitShare: "95%",
-    scaling: false,
-    rules: [
-      "Account Size: $25,000",
-      "Daily Loss Limit: 2%",
-      "Maximum Loss Limit: 4%",
-      "Consistency Rule: 15%",
-      "Minimum Trading Days: 10",
-    ],
-  },
-  {
-    name: "Pro",
-    price: "$1000",
-    color: "from-red-500 to-red-700",
-    profitShare: "95%",
-    scaling: false,
-    rules: [
-      "Account Size: $50,000",
-      "Daily Loss Limit: 2%",
-      "Maximum Loss Limit: 4%",
-      "Consistency Rule: 15%",
-      "Minimum Trading Days: 10",
-    ],
-  },
-  {
-    name: "Elite",
-    price: "$1350",
-    color: "from-pink-500 to-pink-700",
-    profitShare: "95%",
-    scaling: false,
-    rules: [
-      "Account Size: $100,000",
-      "Daily Loss Limit: 2%",
-      "Maximum Loss Limit: 4%",
-      "Consistency Rule: 15%",
-      "Minimum Trading Days: 10",
-    ],
-  },
-];
-
+  const packs = [
+    {
+      name: "Basic",
+      price: "99",
+      color: "from-blue-500 to-blue-700",
+      profitShare: "95%",
+      scaling: false,
+      rules: [
+        "Account Size: $5,000",
+        "Daily Loss Limit: 2%",
+        "Maximum Loss Limit: 4%",
+        "Consistency Rule: 15%",
+        "Minimum Trading Days: 10",
+      ],
+    },
+    {
+      name: "Standard",
+      price: "199",
+      color: "from-purple-500 to-purple-700",
+      profitShare: "95%",
+      scaling: false,
+      rules: [
+        "Account Size: $10,000",
+        "Daily Loss Limit: 2%",
+        "Maximum Loss Limit: 4%",
+        "Consistency Rule: 15%",
+        "Minimum Trading Days: 10",
+      ],
+    },
+    {
+      name: "Advanced",
+      price: "499",
+      color: "from-amber-500 to-amber-700",
+      profitShare: "95%",
+      scaling: false,
+      rules: [
+        "Account Size: $25,000",
+        "Daily Loss Limit: 2%",
+        "Maximum Loss Limit: 4%",
+        "Consistency Rule: 15%",
+        "Minimum Trading Days: 10",
+      ],
+    },
+    {
+      name: "Pro",
+      price: "1000",
+      color: "from-red-500 to-red-700",
+      profitShare: "95%",
+      scaling: false,
+      rules: [
+        "Account Size: $50,000",
+        "Daily Loss Limit: 2%",
+        "Maximum Loss Limit: 4%",
+        "Consistency Rule: 15%",
+        "Minimum Trading Days: 10",
+      ],
+    },
+    {
+      name: "Elite",
+      price: "1350",
+      color: "from-pink-500 to-pink-700",
+      profitShare: "95%",
+      scaling: false,
+      rules: [
+        "Account Size: $100,000",
+        "Daily Loss Limit: 2%",
+        "Maximum Loss Limit: 4%",
+        "Consistency Rule: 15%",
+        "Minimum Trading Days: 10",
+      ],
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
@@ -162,7 +161,7 @@ const packs = [
               {/* CONTENT */}
               <div className="p-6 space-y-4">
                 <div className="text-3xl font-bold text-white">
-                  {pack.price}
+                  ${pack.price}
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -185,9 +184,11 @@ const packs = [
                 </ul>
 
                 {/* BUTTON */}
-                <button className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-main text-black font-semibold hover:bg-[#58c0bc] transition-all">
-                  Get Started <ArrowRight className="w-4 h-4" />
-                </button>
+                <Link href={`/deposit?usdt=${pack.price}`}>
+                  <button className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-main text-black font-semibold hover:bg-[#58c0bc] transition-all">
+                    Get Started <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Link>
               </div>
             </div>
           ))}

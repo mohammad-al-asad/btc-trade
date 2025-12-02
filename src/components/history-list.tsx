@@ -11,7 +11,6 @@ export const OpenOrdersList = ({
     const res = await fetch(`/api/trade/future/end/${tradeId}`, {
       method: "PUT",
     });
-    console.log(await res.json());
   };
   return (
     <div>
@@ -160,16 +159,16 @@ export const ClosedOrdersList = ({
                   ₿{(trade.leverage * +trade.margin) / +trade.entryUSDT}
                 </td>
                 <td className="text-start text-sm text-white">
-                  ${Number(trade.margin).toFixed(2)}
+                  ${(Number(trade.margin)*(+trade.entryUSDT)).toFixed(2)}
                 </td>
                 <td className="text-start text-sm text-white">
                   {trade.leverage}X
                 </td>
                 <td className="text-start text-sm text-white">
-                  ${Number(trade.profit).toFixed(2)}
+                  ${(Number(trade.profit)*(+trade.entryUSDT)).toFixed(2)}
                 </td>
                 <td className="text-start text-sm text-white">
-                  ${Number(trade.loss).toFixed(2)}
+                 ${(Number(trade.loss)*(+trade.entryUSDT)).toFixed(2)}
                 </td>
                 <td
                   className={`text-start text-sm capitalize  ${

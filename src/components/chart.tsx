@@ -250,7 +250,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       }
 
       const data = await response.json();
-      console.log({ data });
       const formattedCandles = data.map((candle: any) => ({
         time: Math.floor(candle[0] / 1000),
         open: getModifiedBtc(btcModify, candle[1]),
