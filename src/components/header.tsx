@@ -27,21 +27,21 @@ const Header = () => {
       </Link>
 
       {/* User Actions */}
-      <div className="flex gap-2 lg:gap-4 items-center">
+      <div className="flex md:gap-2 lg:gap-4 items-center">
         {user && (
           <>
             {/* Navigation */}
-            <nav className="flex items-center gap-6 transition-all">
+            <nav className="flex items-center gap-3 md:gap-6 transition-all">
               <Link
                 href="/pricing"
-                className="hover:text-main text-md font-medium transition-colors flex gap-2 justify-center items-center"
+                className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
               >
                 <GiUpgrade className="w-[15px] h-[15px] hover:text-main" />
-                Upgrade
+                Plans
               </Link>
               <Link
                 href="/profile"
-                className="hover:text-main text-md font-medium transition-colors flex gap-2 justify-center items-center"
+                className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
               >
                 <FaUser className="w-[13px] h-[13px] hover:text-main" />
                 Profile
