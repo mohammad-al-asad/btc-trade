@@ -95,12 +95,9 @@ const Future = () => {
           />
           <button
             onClick={() => setMargin(data.payload.usdt.amount)}
-            className="w-fit px-2 text-main text-[11px] flex gap-1 items-center cursor-pointer"
+            className="w-fit px-4 text-main text-[11px] flex gap-1 items-center cursor-pointer"
           >
             max
-          </button>
-          <button className="w-fit px-4 text-white text-[11px] flex gap-1 items-center cursor-pointer ">
-            USDT <IoMdArrowDropdown className="text-white w-3 h-3" />
           </button>
         </div>
       </div>
