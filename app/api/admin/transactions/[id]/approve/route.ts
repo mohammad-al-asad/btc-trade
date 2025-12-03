@@ -7,9 +7,9 @@ import { getCurrentPrice } from "@/src/lib/utili";
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }>}
+  context: { params: Promise<{ id: string }> }
 ) {
-  const transactionId =  (await context.params).id;
+  const transactionId = (await context.params).id;
 
   try {
     const session: any = await getServerSession(authOptions);
@@ -84,35 +84,58 @@ export async function POST(
       }
 
       // Calculate USDT equivalent
-      const usdtAmount = transaction.amount * currentBtcPrice;
-
-      await prisma.$transaction([
-        prisma.transaction.update({
-          where: { id: transactionId },
-          data: {
-            status: "COMPLETED",
-          },
-        }),
-        // Increase USDT balance
-        prisma.asset.update({
-          where: { id: usdtAsset.id },
-          data: {
-            amount: {
-              increment: usdtAmount,
+      if (transaction.currency == "USD") {
+        await prisma.$transaction([
+          prisma.transaction.update({
+            where: { id: transactionId },
+            data: {
+              status: "COMPLETED",
             },
+          }),
+          // Increase USDT balance
+          prisma.asset.update({
+            where: { id: usdtAsset.id },
+            data: {
+              amount: {
+                increment: transaction.amount,
+              },
+            },
+          }),
+        ]);
+        return NextResponse.json({
+          message: "Deposit approved successfully",
+          transactionId,
+          conversion: {
+            usdtAmount: transaction.amount,
           },
-        }),
-      ]);
-
-      return NextResponse.json({
-        message: "Deposit approved successfully",
-        transactionId,
-        conversion: {
-          btcAmount: transaction.amount,
-          usdtAmount,
-          btcPrice: currentBtcPrice,
-        },
-      });
+        });
+      } else {
+        await prisma.$transaction([
+          prisma.transaction.update({
+            where: { id: transactionId },
+            data: {
+              status: "COMPLETED",
+            },
+          }),
+          // Increase USDT balance
+          prisma.asset.update({
+            where: { id: btcAsset.id },
+            data: {
+              amount: {
+                increment: transaction.amount,
+              },
+            },
+          }),
+        ]);        
+        return NextResponse.json({
+          message: "Deposit approved successfully",
+          transactionId,
+          conversion: {
+            btcAmount: transaction.amount,
+            btcPrice: currentBtcPrice,
+          },
+        });
+      }
     } else if (transaction.type === "WITHDRAWAL") {
       // For withdrawal: user requests USDT, we debit BTC (amount / btcPrice)
       const btcAsset = transaction.user.assets.find(
@@ -121,7 +144,6 @@ export async function POST(
       const usdtAsset = transaction.user.assets.find(
         (asset) => asset.assetName === "USDT"
       );
-
 
       if (!btcAsset || !usdtAsset) {
         return NextResponse.json(

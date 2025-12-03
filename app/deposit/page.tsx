@@ -18,10 +18,9 @@ export default function DepositPage() {
   const [transaction, setTransaction] = useState("");
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState("");
-  const params = useSearchParams()
-  const usdt = params.get("usdt")
-  const [amount, setAmount] = useState(usdt||"0");
-  
+  const params = useSearchParams();
+  const usdt = params.get("usdt");
+  const [amount, setAmount] = useState(usdt || "0");
 
   // Addresses
   const addresses = {
@@ -50,11 +49,13 @@ export default function DepositPage() {
         body: JSON.stringify({
           amount: parseFloat(amount),
           transaction,
-          method,
+          currency: method == "usdt" ? "USD" : "BTC",
         }),
       });
 
       const result = await response.json();
+      console.log(result);
+      
 
       if (response.ok) {
         setMessage("Deposit successful! Redirecting...");
@@ -72,20 +73,8 @@ export default function DepositPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#0d0d0d] to-black text-white">
       <div className="container mx-auto p-4 max-w-md">
-
         {/* Method Selector */}
         <div className="flex justify-center gap-4 mb-6">
-          <button
-            onClick={() => setMethod("btc")}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
-              method === "btc"
-                ? "bg-main text-black border-[#222]"
-                : "bg-[#111] border-[#222] text-gray-300"
-            }`}
-          >
-            Bitcoin (BTC)
-          </button>
-
           <button
             onClick={() => setMethod("usdt")}
             className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
@@ -96,11 +85,21 @@ export default function DepositPage() {
           >
             USDT (TRC20)
           </button>
+
+          <button
+            onClick={() => setMethod("btc")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
+              method === "btc"
+                ? "bg-main text-black border-[#222]"
+                : "bg-[#111] border-[#222] text-gray-300"
+            }`}
+          >
+            Bitcoin (BTC)
+          </button>
         </div>
 
         {/* QR + Address Box */}
         <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 mb-6 backdrop-blur-sm">
-
           <h3 className="text-lg font-semibold mb-4 text-center">
             {method === "btc" ? "Bitcoin Address" : "USDT (TRC20) Address"}
           </h3>
@@ -138,7 +137,6 @@ export default function DepositPage() {
         {/* Deposit Form */}
         <div className="bg-[#0f1113]/60 border border-[#222] rounded-2xl p-6 backdrop-blur-sm">
           <form onSubmit={handleDeposit} className="space-y-6">
-
             <div>
               <label className="block text-sm font-medium text-[#9aa3b2] mb-2">
                 Amount ({method === "btc" ? "BTC" : "USDT"})

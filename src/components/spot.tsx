@@ -19,7 +19,6 @@ const Spot = () => {
 
   const user = useCurrentUser();
   const router = useRouter();
-  const btcPrice = usePrice((s) => s.price);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -33,10 +32,10 @@ const Spot = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: quantity,
+        amount: quantity * price,
         token: "BTC",
         tradeAction: tradeType,
-        price: price,
+        price,
       }),
     });
     const data = await response.json();
@@ -49,17 +48,21 @@ const Spot = () => {
   };
   return (
     <div className="space-y-3 p-1.5 lg:p-3">
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">
-          Quantity (USDT)
-        </label>
+      <label className="block text-sm text-gray-400 mb-1">Quantity (BTC)</label>
+      <div className="relative flex justify-between items-center border-[rgb(69,76,89)] border rounded-lg">
         <input
           type="number"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
-          className="w-full bg-transparent border focus:ring-main focus:ring border-[rgb(69,76,89)] text-white placeholder:text-[rgb(87,94,108)] outline-none rounded-lg px-3 py-2  text-sm"
+          className="px-3 py-2 text-sm flex-1 text-white placeholder:text-[rgb(87,94,108)] border-none outline-none"
           step="0.001"
         />
+        <button
+          onClick={() => setQuantity(data.payload.btc.amount)}
+          className="w-fit px-4 text-main text-[11px] flex gap-1 items-center cursor-pointer"
+        >
+          max
+        </button>
       </div>
       {user && data && (
         <AssetLabels
@@ -84,7 +87,7 @@ const Spot = () => {
       </div>
 
       <div className="text-sm text-gray-400 text-center">
-        Est. BTC: ₿{(quantity / price).toFixed(20)}
+        Est. USDT: ${(quantity * price).toFixed(20)}
       </div>
     </div>
   );

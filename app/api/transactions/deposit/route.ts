@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amount, transaction } = await request.json();
+    const { amount, transaction, currency } = await request.json();
 
     // Validate amount
     if (!amount || amount <= 0) {
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       data: {
         type: "DEPOSIT",
         amount: amount,
+        currency,
         status: "PENDING",
         description: `Transaction id ${transaction}`,
         userId: session.user.id,

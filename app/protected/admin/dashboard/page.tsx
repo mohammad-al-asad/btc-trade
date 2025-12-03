@@ -76,7 +76,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
-
   const fetchTransactions = async () => {
     try {
       const response = await fetch(
@@ -91,7 +90,7 @@ export default function AdminDashboard() {
       console.error("Error fetching transactions:", error);
     }
   };
-
+  
   const fetchBtcPrice = async () => {
     try {
       const response = await fetch("/api/admin/btc-price");
@@ -104,7 +103,6 @@ export default function AdminDashboard() {
       console.error("Error fetching BTC price:", error);
     }
   };
-
   const handleApprove = async (transactionId: string) => {
     setProcessing(transactionId);
     try {
