@@ -57,7 +57,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     // Small delay to ensure DOM is ready
     setTimeout(() => {
       initializeCharts();
-    }, 1);
+    }, 100);
   }, [isChartInitialized]);
 
   const initializeCharts = () => {
