@@ -125,7 +125,7 @@ const TradingHistory = () => {
           }`}
           onClick={() => setActiveTab("open")}
         >
-          Open Orders ({openTrades?.length})
+          Open Orders {openTrades ? `(${openTrades?.length})` : null}
         </button>
         <button
           className={`pb-1.5 md:pb-2 px-1 border-b-2 font-semibold text-sm transition-colors ${
@@ -135,7 +135,8 @@ const TradingHistory = () => {
           }`}
           onClick={() => setActiveTab("history")}
         >
-          Order History ({closedTradeHistory?.length})
+          Order History{" "}
+          {closedTradeHistory ? `(${closedTradeHistory?.length})` : null}
         </button>
       </nav>
 
