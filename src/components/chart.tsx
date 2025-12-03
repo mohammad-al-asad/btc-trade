@@ -50,14 +50,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       // Cleanup charts when component unmounts
       cleanupCharts();
     };
-  }, []);
+  }, [isChartInitialized]);
 
   // Reinitialize charts when tab changes back to Chart
   useEffect(() => {
     // Small delay to ensure DOM is ready
     setTimeout(() => {
       initializeCharts();
-    }, 100);
+    }, 1);
   }, [isChartInitialized]);
 
   const initializeCharts = () => {
