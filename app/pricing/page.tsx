@@ -2,8 +2,10 @@
 
 import { Check, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { IoArrowBack } from "react-icons/io5";
 export default function FundedAccountsPage() {
+  const router = useRouter();
   const packs = [
     {
       name: "Basic",
@@ -76,6 +78,16 @@ export default function FundedAccountsPage() {
       ],
     },
   ];
+
+  async function buyPlan(amount: number) {
+    const res = await fetch("/api/buy-plan", {
+      method: "POST",
+      body: JSON.stringify({
+        amount,
+      }),
+    });
+    if (res.ok) router.push("/profile");
+  }
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
@@ -184,11 +196,12 @@ export default function FundedAccountsPage() {
                 </ul>
 
                 {/* BUTTON */}
-                <Link href={`/deposit?usdt=${pack.price}`}>
-                  <button className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-main text-black font-semibold hover:bg-[#58c0bc] transition-all">
-                    Get Started <ArrowRight className="w-4 h-4" />
-                  </button>
-                </Link>
+                <button
+                  onClick={() => buyPlan(+pack.price)}
+                  className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-main text-black font-semibold hover:bg-[#58c0bc] transition-all"
+                >
+                  Buy Now <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))}

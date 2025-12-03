@@ -58,7 +58,7 @@ const Spot = () => {
           step="0.001"
         />
         <button
-          onClick={() => setQuantity(data.payload.btc.amount)}
+          onClick={() => setQuantity(Number(data.payload.btc.amount).toFixed(10))}
           className="w-fit px-4 text-main text-[11px] flex gap-1 items-center cursor-pointer"
         >
           max
