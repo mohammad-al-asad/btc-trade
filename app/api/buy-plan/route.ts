@@ -7,7 +7,7 @@ import { getCurrentPrice } from "@/src/lib/utili";
 import { use } from "react";
 
 export async function POST(request: NextRequest) {
-  const { amount } = await request.json();
+  const { amount, planType } = await request.json();
   try {
     const session: any = await getServerSession(authOptions);
 
@@ -32,16 +32,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate USDT equivalent
-    prisma.asset.update({
-      where: { id: usdtAsset.id },
-      data: {
-        amount: {
-          decrement: amount,
+    await prisma.$transaction([
+      prisma.asset.update({
+        where: { id: usdtAsset.id },
+        data: {
+          amount: {
+            decrement: amount,
+          },
         },
-      },
-    });
-    return NextResponse.json({ message: "sucessfull" }, { status: 200 });
+      }),
+      prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          plan: {
+            create: {
+              type: planType,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return NextResponse.json({ message: "Plan purchased sucessfully" }, { status: 200 });
   } catch (error) {
     console.error("Approve transaction error:", error);
     return NextResponse.json(

@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
         username: username.toLowerCase(),
         email: email.toLowerCase(),
         password: hashedPassword,
+        plan:{
+          create:{
+            type:"free"
+          }
+        },
         assets: {
           create: [
             { amount: 0.0, assetName: "BTC" },

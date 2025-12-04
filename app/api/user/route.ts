@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,25 +15,10 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-        assets: true,
-        transactions: {
-          orderBy: { createdAt: "desc" },
-          take: 10, // Last 10 transactions for quick overview
-          select: {
-            id: true,
-            type: true,
-            amount: true,
-            status: true,
-            description: true,
-            createdAt: true,
-          },
-        },
+      include: {
+        transactions: true,
+        plan: true,
+        assets:true
       },
     });
 

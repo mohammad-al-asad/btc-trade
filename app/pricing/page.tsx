@@ -3,9 +3,11 @@
 import { Check, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSnackbar } from "notistack";
 import { IoArrowBack } from "react-icons/io5";
 export default function FundedAccountsPage() {
   const router = useRouter();
+  const { enqueueSnackbar } = useSnackbar();
   const packs = [
     {
       name: "Basic",
@@ -79,14 +81,20 @@ export default function FundedAccountsPage() {
     },
   ];
 
-  async function buyPlan(amount: number) {
+  async function buyPlan(amount: number, planType: string) {
     const res = await fetch("/api/buy-plan", {
       method: "POST",
       body: JSON.stringify({
         amount,
+        planType,
       }),
     });
-    if (res.ok) router.push("/profile");
+    if (res.ok) {
+      enqueueSnackbar("Plan purchased", { variant: "success" });
+      setTimeout(() => {
+        router.push("/profile");
+      }, 1000);
+    }
   }
 
   return (
@@ -197,7 +205,7 @@ export default function FundedAccountsPage() {
 
                 {/* BUTTON */}
                 <button
-                  onClick={() => buyPlan(+pack.price)}
+                  onClick={() => buyPlan(+pack.price, pack.name)}
                   className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-main text-black font-semibold hover:bg-[#58c0bc] transition-all"
                 >
                   Buy Now <ArrowRight className="w-4 h-4" />

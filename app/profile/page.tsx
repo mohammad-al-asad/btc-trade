@@ -27,6 +27,7 @@ interface UserData {
   balance?: number;
   createdAt?: string;
   assets: AssetItem[];
+  plan: { type: string };
 }
 
 interface Transaction {
@@ -50,7 +51,6 @@ export default function ProfilePage() {
   const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "BTC">(
     "USD"
   );
-        
 
   // NOTE: If you use external avatars (https://avatar.iran.liara.run),
   // add the domain in next.config.js:
@@ -108,8 +108,9 @@ export default function ProfilePage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
       );
-      const price = await fetch("/api/btc-cur-price").then(res=>res.json()).then(data=>Number(data.price));
-
+      const price = await fetch("/api/btc-cur-price")
+        .then((res) => res.json())
+        .then((data) => Number(data.price));
 
       const { modifyData } = await res.json();
 
@@ -217,7 +218,9 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <p className="text-sm text-[#9aa3b2]">{userData?.email}</p>
+                <p className="text-sm text-[#9aa3b2]">
+                  {userData?.email} <span className="text-black bg-main/80 px-1 ml-1 rounded-sm">{userData?.plan.type || "free"}</span>
+                </p>
                 <p className="text-2xl font-bold">{userData?.username}</p>
               </div>
             </div>

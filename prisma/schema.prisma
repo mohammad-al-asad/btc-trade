@@ -22,6 +22,8 @@ model User {
   role         Role          @default(USER)
   whiteList    Whitelist[]
   assets       Asset[]
+  plan       plan @relation(fields: [planId], references: [id])
+  planId     String @unique
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -112,4 +114,10 @@ model FutureTrade {
   createAt    DateTime @default(now())
   userId      String
   user        User @relation(fields: [userId], references: [id])
+}
+
+model plan {
+  id         String   @id @default(cuid())
+  type        String @default("free")
+  user      User?
 }
