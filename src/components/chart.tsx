@@ -160,7 +160,17 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       // Set chart data if we already have data
       if (candleData.length > 0 && candleSeriesRef.current) {
         candleSeriesRef.current.setData(candleData);
+
+        // FIX: Force chart time range update
+        const times = candleData.map((c) => c.time);
+        if (times.length > 1) {
+          chart.timeScale().setVisibleRange({
+            from: times[times.length - 30] || times[0],
+            to: times[times.length - 1],
+          });
+        }
       }
+
       if (volumeData.length > 0 && volumeSeriesRef.current) {
         volumeSeriesRef.current.setData(volumeData);
       }
@@ -207,14 +217,13 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       try {
         candleSeriesRef.current.setData(candleData);
 
-        // ZOOM IN - Show only last 30 candles for better view
-        if (candleData.length > 50) {
-          setTimeout(() => {
-            chartRef.current?.timeScale().setVisibleRange({
-              from: candleData[candleData.length - 50].time,
-              to: candleData[candleData.length - 1].time,
-            });
-          }, 100);
+        // FIX: Prevent circular relation error
+        const times = candleData.map((c) => c.time);
+        if (chartRef.current && times.length > 1) {
+          chartRef.current.timeScale().setVisibleRange({
+            from: times[times.length - 30] || times[0],
+            to: times[times.length - 1],
+          });
         }
       } catch (error) {
         console.error("Error setting chart data:", error);
@@ -761,7 +770,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                     ))}
                   </div>
                 </div>
-                
               </div>
             </div>
           </div>
