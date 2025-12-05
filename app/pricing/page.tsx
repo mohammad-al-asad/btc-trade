@@ -94,6 +94,9 @@ export default function FundedAccountsPage() {
       setTimeout(() => {
         router.push("/profile");
       }, 1000);
+    } else {
+      const data = await res.json();
+      enqueueSnackbar(data?.error, { variant: "error" });
     }
   }
 
