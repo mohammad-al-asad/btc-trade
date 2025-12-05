@@ -16,11 +16,11 @@ export const POST = async (req: NextRequest) => {
     const asset = await prisma.asset.findFirst({
       where: {
         userId: user.id,
-        assetName: "BTC",
+        assetName: "USDT",
       },
     });
 
-    if (asset!.amount?.toFixed(9) < margin) {
+    if (asset!.amount?.toFixed(2) < margin) {
       return NextResponse.json({ error: "Balance Mismatch" }, { status: 400 });
     }
 
@@ -38,9 +38,8 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    return Response.json({ message : "Order Created" }, { status: 201 });
-  } catch{
-   
-   
+    return Response.json({ message: "Order Created" }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Trade Failed" }, { status: 500 });
   }
 };

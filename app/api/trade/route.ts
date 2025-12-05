@@ -27,6 +27,7 @@ export const POST = async (req: NextRequest) => {
       const btcAsset = userAssets.find(
         (asset) => asset.assetName == AssetName.BTC
       );
+      console.log(amount / price, btcAsset!.amount);
 
       if (Decimal(amount / price) > btcAsset!.amount) {
         return NextResponse.json({ error: "BTC Mismatch" }, { status: 400 });
@@ -60,8 +61,8 @@ export const POST = async (req: NextRequest) => {
       const usdtAsset = userAssets.find(
         (asset) => asset.assetName == AssetName.USDT
       );
-      
-      if (Number(amount)> Number(usdtAsset!.amount.toFixed(2))){
+
+      if (Number(amount) > Number(usdtAsset!.amount.toFixed(2))) {
         return NextResponse.json({ error: "Not enogh token" }, { status: 400 });
       }
       await prisma.$transaction([

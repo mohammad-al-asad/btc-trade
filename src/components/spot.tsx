@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ const Spot = () => {
           max
         </button>
       </div>
-      {user && data && (
+      {user && data?.payload?.usdt?.amount && (
         <AssetLabels
           usdt={data.payload.usdt.amount}
           btc={(+data.payload.btc.amount).toFixed(20)}
@@ -87,7 +88,7 @@ const Spot = () => {
       </div>
 
       <div className="text-sm text-gray-400 text-center">
-        Est. USDT: ${(quantity * price).toFixed(20)}
+        Est. USDT: ${(quantity * price).toFixed(2)}
       </div>
     </div>
   );
