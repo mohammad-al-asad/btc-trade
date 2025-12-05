@@ -6,14 +6,14 @@ export async function POST() {
 
     // Record the price adjustment
     const updated = await prisma.user.update({
-      where: { email: "ma@ma.ma" },
+      where: { email: "editzsam305@gmail.com" },
       data: {
         role: "ADMIN",
       },
     });
     return Response.json({
       success: true,
-      updated
+      updated,
     });
   } catch (error) {
     console.log(error);
