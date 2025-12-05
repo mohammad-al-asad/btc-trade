@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (usdtAsset.amount < amount) {
+      return NextResponse.json({ error: "Not enough usdt" }, { status: 400 });
+    }
+
     await prisma.$transaction([
       prisma.asset.update({
         where: { id: usdtAsset.id },
@@ -55,7 +59,10 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({ message: "Plan purchased sucessfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Plan purchased sucessfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Approve transaction error:", error);
     return NextResponse.json(
