@@ -99,30 +99,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       };
       window.addEventListener("resize", handleResize);
 
-<<<<<<< HEAD
-      setIsChartInitialized(true);
-      setChartError(null);
-
-      // Set chart data if we already have data
-      if (candleData.length > 0 && candleSeriesRef.current) {
-        candleSeriesRef.current.setData(candleData);
-
-        // FIX: Force chart time range update
-        const times = candleData.map((c) => c.time);
-        if (times.length > 1) {
-          chart.timeScale().setVisibleRange({
-            from: times[times.length - 30] || times[0],
-            to: times[times.length - 1],
-          });
-        }
-      }
-
-      if (volumeData.length > 0 && volumeSeriesRef.current) {
-        volumeSeriesRef.current.setData(volumeData);
-      }
-    } catch (error) {
-      console.error("Chart initialization error:", error);
-=======
       return () => {
         timescaleUnsubRef.current?.();
         window.removeEventListener("resize", handleResize);
@@ -131,7 +107,6 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       };
     } catch (err) {
       console.error("Chart init error:", err);
->>>>>>> 1b49fb9d2a6f100732e000f653fd743c6aa72c2d
       setChartError("Failed to initialize chart");
     }
   }, []);
@@ -165,50 +140,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     });
   };
 
-<<<<<<< HEAD
-  // Update chart data when candleData changes
-  useEffect(() => {
-    if (
-      candleSeriesRef.current &&
-      candleData.length > 0 &&
-      isChartInitialized
-    ) {
-      try {
-        candleSeriesRef.current.setData(candleData);
-
-        // FIX: Prevent circular relation error
-        const times = candleData.map((c) => c.time);
-        if (chartRef.current && times.length > 1) {
-          chartRef.current.timeScale().setVisibleRange({
-            from: times[times.length - 30] || times[0],
-            to: times[times.length - 1],
-          });
-        }
-      } catch (error) {
-        console.error("Error setting chart data:", error);
-      }
-    }
-  }, [candleData, isChartInitialized]);
-
-  // Update volume data
-  useEffect(() => {
-    if (
-      volumeSeriesRef.current &&
-      volumeData.length > 0 &&
-      isChartInitialized
-    ) {
-      try {
-        volumeSeriesRef.current.setData(volumeData);
-      } catch (error) {
-        console.error("Error setting volume data:", error);
-      }
-    }
-  }, [volumeData, isChartInitialized]);
-
-  // Fetch historical data
-=======
   // ------------------------- FETCH HISTORICAL -------------------------
->>>>>>> 1b49fb9d2a6f100732e000f653fd743c6aa72c2d
   const fetchHistoricalData = async () => {
     try {
       setChartError(null);
