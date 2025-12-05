@@ -1,89 +1,54 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { createChart } from "lightweight-charts";
+import { createChart, LogicalRange } from "lightweight-charts";
 import TradePanel from "./trade";
 import Header from "./header";
-import BitcoinInfo from "./info";
+import TradeHistory from "./history";
 import { useSize } from "../lib/hook";
 import { getModifiedBtc } from "../lib/clientUtility";
 import { usePrice } from "../lib/store";
-import TradeHistory from "./history";
 
 export default function TradingPage({ btcModify }: { btcModify: string }) {
   const [price, setPrice] = useState<number | null>(null);
   const size = useSize();
   const [candleData, setCandleData] = useState<any[]>([]);
   const [volumeData, setVolumeData] = useState<any[]>([]);
-  const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({
-    bids: [],
-    asks: [],
-  });
+  const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({ bids: [], asks: [] });
   const [timeframe, setTimeframe] = useState("1d");
-  const [isConnected, setIsConnected] = useState(false);
   const [chartError, setChartError] = useState<string | null>(null);
-  const [isChartInitialized, setIsChartInitialized] = useState(false);
-
-  const [indicators, setIndicators] = useState({
-    ma25: 2.0771,
-    ma99: 2.6543,
-  });
+  const [indicators, setIndicators] = useState({ ma25: 0, ma99: 0 });
   const [previousPrice, setPreviousPrice] = useState<number | null>(null);
 
-  const chartContainerRef = useRef<any>(null);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
-  const volumeChartContainerRef = useRef<any>(null);
+  const volumeChartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeChartRef = useRef<any>(null);
   const volumeSeriesRef = useRef<any>(null);
+
   const tradeWsRef = useRef<WebSocket | null>(null);
   const klineWsRef = useRef<WebSocket | null>(null);
   const depthWsRef = useRef<WebSocket | null>(null);
 
-  // Initialize chart - WITH PROPER CLEANUP
+  const isSyncingRef = useRef(false);
+  const timescaleUnsubRef = useRef<any>(null);
+  const hasInitialFitRef = useRef(false);
+
+  const setGolbalPrice = usePrice((state: any) => state.setPrice);
+
+  // ------------------------- INITIALIZE CHART -------------------------
   useEffect(() => {
-    if (chartContainerRef.current && !isChartInitialized) {
-      initializeCharts();
-    }
-
-    return () => {
-      // Cleanup charts when component unmounts
-      cleanupCharts();
-    };
-  }, [isChartInitialized]);
-
-  // Reinitialize charts when tab changes back to Chart
-  useEffect(() => {
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      initializeCharts();
-    }, 100);
-  }, []);
-
-  const initializeCharts = () => {
-    if (!chartContainerRef.current || isChartInitialized) return;
+    if (!chartContainerRef.current) return;
 
     try {
-      cleanupCharts(); // Cleanup any existing charts first
-
-      // MAIN CANDLESTICK CHART
+      // Main Candlestick Chart
       const chart = createChart(chartContainerRef.current, {
-        layout: {
-          // Binance-like dark background and text
-          background: { color: "rgb(24,26,31)" },
-          textColor: "#cfd2d3",
-        },
-        grid: {
-          vertLines: { color: "#1f2328" },
-          horzLines: { color: "#1f2328" },
-        },
+        layout: { background: { color: "rgb(24,26,31)" }, textColor: "#cfd2d3" },
+        grid: { vertLines: { color: "#1f2328" }, horzLines: { color: "#1f2328" } },
         width: chartContainerRef.current.clientWidth,
-        height: size == "SM" ? 220 : size == "MD" ? 280 : 400,
-        timeScale: {
-          timeVisible: true,
-          secondsVisible: false,
-          borderColor: "#1f2328",
-        },
+        height: size === "SM" ? 220 : size === "MD" ? 280 : 400,
+        timeScale: { timeVisible: true, secondsVisible: false, borderColor: "#1f2328" },
       });
 
       const candleSeries = chart.addCandlestickSeries({
@@ -97,439 +62,211 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       chartRef.current = chart;
       candleSeriesRef.current = candleSeries;
 
-      // VOLUME CHART
+      // Volume Chart
       if (volumeChartContainerRef.current) {
-        const volumeChart: any = createChart(volumeChartContainerRef.current, {
-          layout: {
-            background: { color: "rgb(24,26,31)" },
-            textColor: "#cfd2d3",
-          },
-          grid: {
-            vertLines: { color: "#1f2328" },
-            horzLines: { color: "#1f2328" },
-          },
+        const volumeChart:any = createChart(volumeChartContainerRef.current, {
+          layout: { background: { color: "rgb(24,26,31)" }, textColor: "#cfd2d3" },
+          grid: { vertLines: { color: "#1f2328" }, horzLines: { color: "#1f2328" } },
           width: volumeChartContainerRef.current.clientWidth,
-          height: size == "SM" ? 80 : size == "MD" ? 110 : 150,
-          timeScale: {
-            timeVisible: true,
-            secondsVisible: false,
-            borderColor: "#1f2328",
-          },
+          height: size === "SM" ? 80 : size === "MD" ? 110 : 150,
+          timeScale: { timeVisible: true, secondsVisible: false, borderColor: "#1f2328" },
         });
 
         const volumeSeries = volumeChart.addHistogramSeries({
           color: "#0ecb81",
-          priceFormat: {
-            type: "volume",
-          },
+          priceFormat: { type: "volume" },
           priceScaleId: "",
-          scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-          },
+          scaleMargins: { top: 0.8, bottom: 0 },
         });
 
         volumeChartRef.current = volumeChart;
         volumeSeriesRef.current = volumeSeries;
 
-        // Sync time scale between main chart and volume chart
-        chart.timeScale().subscribeVisibleTimeRangeChange((timeRange: any) => {
-          volumeChart.timeScale().setVisibleRange(timeRange);
+        // Sync charts
+        const unsubscribe = chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
+          if (!logicalRange || isSyncingRef.current) return;
+          isSyncingRef.current = true;
+          volumeChart.timeScale().setVisibleLogicalRange(logicalRange);
+          setTimeout(() => (isSyncingRef.current = false), 10);
         });
+        timescaleUnsubRef.current = unsubscribe;
       }
 
-      // Handle window resize
+      // Window resize
       const handleResize = () => {
-        if (chartContainerRef.current && chartRef.current) {
-          chartRef.current.applyOptions({
-            width: chartContainerRef.current.clientWidth,
-          });
-        }
-        if (volumeChartContainerRef.current && volumeChartRef.current) {
-          volumeChartRef.current.applyOptions({
-            width: volumeChartContainerRef.current.clientWidth,
-          });
-        }
+        chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
+        volumeChartRef.current?.applyOptions({ width: volumeChartContainerRef.current?.clientWidth });
       };
-
       window.addEventListener("resize", handleResize);
 
-      setIsChartInitialized(true);
-      setChartError(null);
-
-      // Set chart data if we already have data
-      if (candleData.length > 0 && candleSeriesRef.current) {
-        candleSeriesRef.current.setData(candleData);
-      }
-      if (volumeData.length > 0 && volumeSeriesRef.current) {
-        volumeSeriesRef.current.setData(volumeData);
-      }
-    } catch (error) {
-      console.error("Chart initialization error:", error);
+      return () => {
+        timescaleUnsubRef.current?.();
+        window.removeEventListener("resize", handleResize);
+        chart.remove();
+        volumeChartRef.current?.remove();
+      };
+    } catch (err) {
+      console.error("Chart init error:", err);
       setChartError("Failed to initialize chart");
-      setIsChartInitialized(false);
     }
+  }, []);
+
+  // ------------------------- UPDATE CANDLE & VOLUME DATA -------------------------
+  const updateCandleData = (newCandle: any) => {
+    setCandleData((prev) => {
+      const last = prev[prev.length - 1];
+      let updated;
+      if (last && last.time === newCandle.time) {
+        updated = [...prev.slice(0, -1), newCandle];
+      } else {
+        updated = [...prev, newCandle].slice(-100); // max 100 candles
+      }
+      candleSeriesRef.current?.setData(updated);
+      return updated;
+    });
   };
 
-  const cleanupCharts = () => {
-    // Cleanup main chart
-    if (chartRef.current) {
-      try {
-        chartRef.current.remove();
-      } catch (error) {
-        console.error("Error removing main chart:", error);
+  const updateVolumeData = (newVolume: any) => {
+    setVolumeData((prev) => {
+      const last = prev[prev.length - 1];
+      let updated;
+      if (last && last.time === newVolume.time) {
+        updated = [...prev.slice(0, -1), newVolume];
+      } else {
+        updated = [...prev, newVolume].slice(-100);
       }
-      chartRef.current = null;
-    }
-
-    // Cleanup volume chart
-    if (volumeChartRef.current) {
-      try {
-        volumeChartRef.current.remove();
-      } catch (error) {
-        console.error("Error removing volume chart:", error);
-      }
-      volumeChartRef.current = null;
-    }
-
-    candleSeriesRef.current = null;
-    volumeSeriesRef.current = null;
-    setIsChartInitialized(false);
+      volumeSeriesRef.current?.setData(updated);
+      return updated;
+    });
   };
 
-  // Update chart data when candleData changes
-  useEffect(() => {
-    if (
-      candleSeriesRef.current &&
-      candleData.length > 0 &&
-      isChartInitialized
-    ) {
-      try {
-        candleSeriesRef.current.setData(candleData);
-
-        // ZOOM IN - Show only last 30 candles for better view
-        if (candleData.length > 50) {
-          setTimeout(() => {
-            chartRef.current?.timeScale().setVisibleRange({
-              from: candleData[candleData.length - 50].time,
-              to: candleData[candleData.length - 1].time,
-            });
-          }, 100);
-        }
-      } catch (error) {
-        console.error("Error setting chart data:", error);
-      }
-    }
-  }, [candleData, isChartInitialized]);
-
-  // Update volume data
-  useEffect(() => {
-    if (
-      volumeSeriesRef.current &&
-      volumeData.length > 0 &&
-      isChartInitialized
-    ) {
-      try {
-        volumeSeriesRef.current.setData(volumeData);
-      } catch (error) {
-        console.error("Error setting volume data:", error);
-      }
-    }
-  }, [volumeData, isChartInitialized]);
-
-  // Fetch historical data
+  // ------------------------- FETCH HISTORICAL -------------------------
   const fetchHistoricalData = async () => {
     try {
       setChartError(null);
-      const response = await fetch(
+      const res = await fetch(
         `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${timeframe}&limit=100`
       );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const formattedCandles = data.map((c: any) => ({
+        time: Math.floor(c[0] / 1000),
+        open: getModifiedBtc(btcModify, c[1]),
+        high: getModifiedBtc(btcModify, c[2]),
+        low: getModifiedBtc(btcModify, c[3]),
+        close: getModifiedBtc(btcModify, c[4]),
+      })).sort((a:any, b:any) => a.time - b.time); // ensure ascending
 
-      const data = await response.json();
-      const formattedCandles = data.map((candle: any) => ({
-        time: Math.floor(candle[0] / 1000),
-        open: getModifiedBtc(btcModify, candle[1]),
-        high: getModifiedBtc(btcModify, candle[2]),
-        low: getModifiedBtc(btcModify, candle[3]),
-        close: getModifiedBtc(btcModify, candle[4]),
-      }));
-
-      const formattedVolume = data.map((candle: any) => ({
-        time: Math.floor(candle[0] / 1000),
-        value: getModifiedBtc(btcModify, candle[5]),
-        color:
-          parseFloat(candle[4]) >= parseFloat(candle[1])
-            ? "#0ecb81"
-            : "#f6465d",
-      }));
+      const formattedVolume = data.map((c: any) => ({
+        time: Math.floor(c[0] / 1000),
+        value: getModifiedBtc(btcModify, c[5]),
+        color: parseFloat(c[4]) >= parseFloat(c[1]) ? "#0ecb81" : "#f6465d",
+      })).sort((a:any, b:any) => a.time - b.time);
 
       setCandleData(formattedCandles);
       setVolumeData(formattedVolume);
 
-      if (formattedCandles.length > 0) {
-        const lastCandle = formattedCandles[formattedCandles.length - 1];
-        setPrice(lastCandle.close);
-        setPreviousPrice(lastCandle.close);
+      const lastClose = formattedCandles[formattedCandles.length - 1]?.close;
+      if (lastClose) {
+        setPrice(lastClose);
+        setPreviousPrice(lastClose);
       }
 
-      // Calculate indicators
-      const closes = formattedCandles.map((candle: any) => candle.close);
-      const avgClose =
-        closes.reduce((sum: number, close: number) => sum + close, 0) /
-        closes.length;
-
-      setIndicators({
-        ma25: avgClose,
-        ma99: avgClose * 1.2,
-      });
-    } catch (error) {
-      console.error("Error fetching historical data:", error);
+      // Simple indicators
+      const closes = formattedCandles.map((c: any) => c.close);
+      const avg = closes.reduce((sum:any, v:any) => sum + v, 0) / closes.length;
+      setIndicators({ ma25: avg, ma99: avg * 1.2 });
+    } catch (err) {
+      console.error("Fetch historical error:", err);
       setChartError("Failed to load historical data");
     }
   };
 
-  // WebSocket connections with proper cleanup
+  // ------------------------- WEBSOCKETS -------------------------
   const setupWebSockets = () => {
-    setupTradeWebSocket();
-    setupKlineWebSocket();
-    setupDepthWebSocket();
+    // Trade
+    if (tradeWsRef.current) tradeWsRef.current.close();
+    const tradeWs = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+    tradeWs.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        const modifiedPrice = getModifiedBtc(btcModify, data.p);
+        setPrice((prev) => {
+          setPreviousPrice(prev);
+          return modifiedPrice;
+        });
+      } catch {}
+    };
+    tradeWsRef.current = tradeWs;
+
+    // Kline
+    if (klineWsRef.current) klineWsRef.current.close();
+    const klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${timeframe}`);
+    klineWs.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        const k = data.k;
+        const newCandle = {
+          time: Math.floor(k.t / 1000),
+          open: getModifiedBtc(btcModify, k.o),
+          high: getModifiedBtc(btcModify, k.h),
+          low: getModifiedBtc(btcModify, k.l),
+          close: getModifiedBtc(btcModify, k.c),
+        };
+        const newVolume = {
+          time: Math.floor(k.t / 1000),
+          value: getModifiedBtc(btcModify, k.v),
+          color: parseFloat(k.c) >= parseFloat(k.o) ? "#0ecb81" : "#f6465d",
+        };
+
+        updateCandleData(newCandle);
+        updateVolumeData(newVolume);
+      } catch {}
+    };
+    klineWsRef.current = klineWs;
+
+    // Depth
+    if (depthWsRef.current) depthWsRef.current.close();
+    const depthWs = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms");
+    depthWs.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setOrderBook({
+          bids: data.bids.slice(0, 10).map((b: any) => ({ price: parseFloat(b[0]), quantity: parseFloat(b[1]) })),
+          asks: data.asks.slice(0, 10).map((a: any) => ({ price: parseFloat(a[0]), quantity: parseFloat(a[1]) })),
+        });
+      } catch {}
+    };
+    depthWsRef.current = depthWs;
   };
 
   const cleanupWebSockets = () => {
-    [tradeWsRef, klineWsRef, depthWsRef].forEach((wsRef) => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    });
-    setIsConnected(false);
+    [tradeWsRef, klineWsRef, depthWsRef].forEach((ws) => ws.current?.close());
   };
 
-  const setupTradeWebSocket = () => {
-    try {
-      if (tradeWsRef.current) {
-        tradeWsRef.current.close();
-      }
-
-      const ws = new WebSocket(
-        "wss://stream.binance.com:9443/ws/btcusdt@trade"
-      );
-
-      ws.onopen = () => {
-        console.log("Trade WebSocket connected");
-        setIsConnected(true);
-        setChartError(null);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const modifiedPrice = getModifiedBtc(btcModify, data.p);
-
-          setPrice((prev) => {
-            setPreviousPrice(prev);
-            return modifiedPrice;
-          });
-        } catch (error) {
-          console.error("Error processing trade data:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("Trade WebSocket error:", error);
-        setIsConnected(false);
-        setChartError("WebSocket connection error");
-      };
-
-      ws.onclose = (event) => {
-        console.log("Trade WebSocket disconnected:", event.code, event.reason);
-        setIsConnected(false);
-        // Only reconnect if we're still on the Chart tab
-        setTimeout(() => {
-          if (
-            !tradeWsRef.current ||
-            tradeWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupTradeWebSocket();
-          }
-        }, 5000);
-      };
-
-      tradeWsRef.current = ws;
-    } catch (error) {
-      console.error("Error setting up trade WebSocket:", error);
-      setChartError("Failed to setup WebSocket connection");
-    }
-  };
-
-  const setupKlineWebSocket = () => {
-    try {
-      if (klineWsRef.current) {
-        klineWsRef.current.close();
-      }
-
-      const interval =
-        timeframe === "1d"
-          ? "1d"
-          : timeframe === "4h"
-          ? "4h"
-          : timeframe === "1h"
-          ? "1h"
-          : timeframe === "15m"
-          ? "15m"
-          : "1m";
-
-      const ws = new WebSocket(
-        `wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`
-      );
-
-      ws.onopen = () => {
-        console.log("Kline WebSocket connected");
-        setChartError(null);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const kline = data.k;
-
-          const newCandle = {
-            time: Math.floor(kline.t / 1000),
-            open: getModifiedBtc(btcModify, kline.o),
-            high: getModifiedBtc(btcModify, kline.h),
-            low: getModifiedBtc(btcModify, kline.l),
-            close: getModifiedBtc(btcModify, kline.c),
-          };
-
-          const newVolume = {
-            time: Math.floor(kline.t / 1000),
-            value: getModifiedBtc(btcModify, kline.v),
-            color:
-              parseFloat(kline.c) >= parseFloat(kline.o)
-                ? "#0ecb81"
-                : "#f6465d",
-          };
-
-          if (kline.x) {
-            // Candle closed
-            setCandleData((prev) => {
-              const newData = [...prev, newCandle];
-              return newData.slice(-100);
-            });
-            setVolumeData((prev) => {
-              const newData = [...prev, newVolume];
-              return newData.slice(-100);
-            });
-          } else {
-            // Update current candle
-            setCandleData((prev) => {
-              if (prev.length === 0) return [newCandle];
-              const newData = [...prev.slice(0, -1), newCandle];
-              return newData;
-            });
-            setVolumeData((prev) => {
-              if (prev.length === 0) return [newVolume];
-              const newData = [...prev.slice(0, -1), newVolume];
-              return newData;
-            });
-          }
-        } catch (error) {
-          console.error("Error processing kline data:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("Kline WebSocket error:", error);
-      };
-
-      ws.onclose = (event) => {
-        console.log("Kline WebSocket closed:", event.code, event.reason);
-        // Only reconnect if we're still on the Chart tab
-        setTimeout(() => {
-          if (
-            !klineWsRef.current ||
-            klineWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupKlineWebSocket();
-          }
-        }, 5000);
-      };
-
-      klineWsRef.current = ws;
-    } catch (error) {
-      console.error("Error setting up kline WebSocket:", error);
-    }
-  };
-
-  const setupDepthWebSocket = () => {
-    try {
-      if (depthWsRef.current) {
-        depthWsRef.current.close();
-      }
-
-      const ws = new WebSocket(
-        "wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms"
-      );
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setOrderBook({
-            bids: data.bids.slice(0, 10).map((bid: any) => ({
-              price: parseFloat(bid[0]),
-              quantity: parseFloat(bid[1]),
-            })),
-            asks: data.asks.slice(0, 10).map((ask: any) => ({
-              price: parseFloat(ask[0]),
-              quantity: parseFloat(ask[1]),
-            })),
-          });
-        } catch (error) {
-          console.error("Error processing depth data:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("Depth WebSocket error:", error);
-      };
-
-      ws.onclose = (event) => {
-        console.log("Depth WebSocket closed:", event.code, event.reason);
-        // Only reconnect if we're still on the Chart tab
-        setTimeout(() => {
-          if (
-            !depthWsRef.current ||
-            depthWsRef.current.readyState === WebSocket.CLOSED
-          ) {
-            setupDepthWebSocket();
-          }
-        }, 5000);
-      };
-
-      depthWsRef.current = ws;
-    } catch (error) {
-      console.error("Error setting up depth WebSocket:", error);
-    }
-  };
-
-  // Load data when timeframe changes
+  // ------------------------- EFFECTS -------------------------
   useEffect(() => {
     fetchHistoricalData();
-  }, [timeframe]);
-
-  // Setup WebSockets when on Chart tab
-  useEffect(() => {
+    cleanupWebSockets();
     setupWebSockets();
-    return () => {
-      // Cleanup WebSockets when component unmounts or tab changes
-      cleanupWebSockets();
-    };
   }, [timeframe]);
 
+  useEffect(() => {
+    if (price) setGolbalPrice(price);
+  }, [price]);
+
+  // ------------------------- PRICE CHANGE -------------------------
+  const priceChange = (() => {
+    if (candleData.length < 2) return { change: 0, percent: 0 };
+    const current = candleData[candleData.length - 1]?.close || price || 0;
+    const previous = candleData[candleData.length - 2]?.close || current;
+    const change = current - previous;
+    const percent = previous > 0 ? (change / previous) * 100 : 0;
+    return { change, percent };
+  })();
+
+  // ------------------------- TIMEFRAMES -------------------------
   const timeframes = [
     { value: "1m", label: "1m" },
     { value: "5m", label: "5m" },
@@ -539,229 +276,103 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     { value: "1d", label: "1D" },
   ];
 
-  const getPriceChange = () => {
-    if (candleData.length < 2) return { change: 0, percent: 0 };
-    const current = candleData[candleData.length - 1]?.close || price || 0;
-    const previous = candleData[candleData.length - 2]?.close || current;
-    const change = current - previous;
-    const percent = previous > 0 ? (change / previous) * 100 : 0;
-    return { change, percent };
-  };
-
-  const priceChange = getPriceChange();
-
-  const { setPrice: setGolbalPrice } = usePrice((state: any) => state);
-  useEffect(() => {
-    if (price) {
-      setGolbalPrice(price);
-    }
-  }, [price]);
-
+  // ------------------------- RENDER -------------------------
   return (
     <div className="min-h-screen bg-[rgb(12,14,17)] text-white">
-      {/* Connection Status */}
-      {/* <div
-        className={`p-1 text-center text-xs ${
-          isConnected ? "bg-green-600" : "bg-red-600"
-        }`}
-      >
-        {isConnectedå
-          ? "Connected to Binance"
-          : "Disconnected - Reconnecting..."}
-      </div> */}
       <Header />
-
       <div className="container mx-auto p-2">
-        <div>
-          {/* Chart Header */}
-          <div className="bg-bg  p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
-            <div className="flex flex-col md:flex-row justify-between items-center flex-1  ">
-              <div className="grid  grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
-                <div>
-                  <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
-                  <div className="text-xs lg:text-sm text-gray-400">
-                    {timeframe.toUpperCase()} · Binance
-                  </div>
-                </div>
-                <div>
-                  {price && (
-                    <div
-                      style={{
-                        color: `${
-                          previousPrice !== null
-                            ? price > previousPrice
-                              ? "#0ecb81"
-                              : price < previousPrice
-                              ? "#f6465d"
-                              : "#0ecb81"
-                            : "#0ecb81"
-                        }`,
-                      }}
-                      className={`text-lg text-end lg:text-xl font-semibold `}
-                    >
-                      $
-                      {price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm w-full">
-                  <div className="flex space-x-4  w-full">
-                    <span className="text-xs lg:text-sm">
-                      O{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.open.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm">
-                      H{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.high.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm">
-                      L{" "}
-                      {candleData.length > 0
-                        ? candleData[candleData.length - 1]?.low.toFixed(4) ||
-                          "0.0000"
-                        : "0.0000"}
-                    </span>
-                    <span className="text-xs lg:text-sm ">
-                      C {price ? price.toFixed(4) : "0.0000"}
-                    </span>
-                  </div>
-                  <div
-                    className={`font-semibold text-[10px] lg:text-xs ${
-                      priceChange.change >= 0 ? "text-green" : "text-red"
-                    }`}
-                  >
-                    {priceChange.change >= 0 ? "+" : ""}
-                    {priceChange.change.toFixed(4)} (
-                    {priceChange.percent >= 0 ? "+" : ""}
-                    {priceChange.percent.toFixed(2)}%)
-                  </div>
-                </div>
+        {/* Chart Header */}
+        <div className="bg-bg p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
+          <div className="flex flex-col md:flex-row justify-between items-center flex-1">
+            <div className="grid grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
+              <div>
+                <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
+                <div className="text-xs lg:text-sm text-gray-400">{timeframe.toUpperCase()} · Binance</div>
               </div>
-
-              <div className="flex items-center  w-full   justify-between md:justify-end space-x-2 mt-3 md:mt-0">
-                {/* Timeframe Buttons */}
-                <div className="flex bg-[#1f2328] rounded p-1">
-                  {timeframes.map((tf) => (
-                    <button
-                      key={tf.value}
-                      onClick={() => setTimeframe(tf.value)}
-                      className={`p-1 md:px-2 md:py-1 text-xs rounded ${
-                        timeframe === tf.value
-                          ? "bg-[#2b3139]"
-                          : "hover:bg-[#2b3139]"
-                      }`}
-                    >
-                      {tf.label}
-                    </button>
-                  ))}
+              <div>
+                {price && (
+                  <div
+                    style={{
+                      color: previousPrice !== null ? (price > previousPrice ? "#0ecb81" : "#f6465d") : "#0ecb81",
+                    }}
+                    className="text-lg lg:text-xl font-semibold text-end"
+                  >
+                    ${price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </div>
+                )}
+              </div>
+              <div className="text-sm w-full">
+                <div className="flex space-x-4 w-full">
+                  <span className="text-xs lg:text-sm">O {candleData.slice(-1)[0]?.open.toFixed(4) || "0.0000"}</span>
+                  <span className="text-xs lg:text-sm">H {candleData.slice(-1)[0]?.high.toFixed(4) || "0.0000"}</span>
+                  <span className="text-xs lg:text-sm">L {candleData.slice(-1)[0]?.low.toFixed(4) || "0.0000"}</span>
+                  <span className="text-xs lg:text-sm">C {price?.toFixed(4) || "0.0000"}</span>
                 </div>
-
-                {/* Chart Controls */}
-                <button className="p-1 hover:bg-[#2b3139] rounded text-xs">
-                  ☐
-                </button>
-                <button className="p-1 hover:bg-[#2b3139] rounded text-xs ">
-                  O
-                </button>
-                <select className="bg-[#1f2328] rounded px-2 py-1 text-xs">
-                  <option>Trading View</option>
-                </select>
+                <div className={`font-semibold text-[10px] lg:text-xs ${priceChange.change >= 0 ? "text-green" : "text-red"}`}>
+                  {priceChange.change >= 0 ? "+" : ""}
+                  {priceChange.change.toFixed(4)} ({priceChange.percent >= 0 ? "+" : ""}{priceChange.percent.toFixed(2)}%)
+                </div>
               </div>
             </div>
-            {/* Indicators */}
-            <div className="flex space-x-4 text-xs text-gray-400 mt-1 mb-2">
-              <div>
-                MA 25 close 0{" "}
-                <span className="text-white">{indicators.ma25.toFixed(4)}</span>
-              </div>
-              <div>
-                MA 99 close 0{" "}
-                <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+
+            {/* Timeframe Buttons */}
+            <div className="flex items-center w-full justify-between md:justify-end space-x-2 mt-3 md:mt-0">
+              <div className="flex bg-[#1f2328] rounded p-1">
+                {timeframes.map((tf) => (
+                  <button
+                    key={tf.value}
+                    onClick={() => setTimeframe(tf.value)}
+                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${timeframe === tf.value ? "bg-[#2b3139]" : "hover:bg-[#2b3139]"}`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Main Chart Area */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
-            {/* Chart - 3/4 width */}
-            <div className="lg:col-span-3 h-fit rounded-lg ">
-              {/* Main Candlestick Chart */}
-              <div
-                ref={chartContainerRef}
-                className=" border-2 border-[#1f2328] bg-[#0b0e11] w-full rounded-t-lg overflow-hidden"
-              />
+          {/* Indicators */}
+          <div className="flex space-x-4 text-xs text-gray-400 mt-1 mb-2">
+            <div>MA 25 close <span className="text-white">{indicators.ma25.toFixed(4)}</span></div>
+            <div>MA 99 close <span className="text-white">{indicators.ma99.toFixed(4)}</span></div>
+          </div>
+        </div>
 
-              {/* Volume Chart - BOTTOM OF MAIN CHART */}
-              <div
-                ref={volumeChartContainerRef}
-                className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden"
-              />
-
-              {/* {!isChartInitialized && !chartError && (
-                <div className="text-center text-gray-400 py-8">
-                  Initializing chart...
-                </div>
-              )} */}
-
-              <div className="border-[#1f2328] border rounded-md overflow-hidden hidden md:block mt-2">
-                <TradeHistory />
-              </div>
+        {/* Chart + Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
+          {/* Chart */}
+          <div className="lg:col-span-3 h-fit rounded-lg">
+            <div ref={chartContainerRef} className="border-2 border-[#1f2328] bg-[#0b0e11] w-full rounded-t-lg overflow-hidden" />
+            <div ref={volumeChartContainerRef} className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden" />
+            <div className="border-[#1f2328] border rounded-md overflow-hidden hidden md:block mt-2">
+              <TradeHistory />
             </div>
+          </div>
 
-            {/* Sidebar - 1/4 width */}
-            <div className="space-y-2 lg:space-y-2 ">
-              <TradePanel price={Number(price)} />
-
-              {/* Order Book */}
-              <div className="h-[440px] overflow-y-auto">
-                <div className="bg-bg rounded-lg p-4 border border-[#1f2328] max-h-[500px] h-[500px]! overflow-hidden">
-                  <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
-                    Order Book
-                  </h3>
-
-                  <div className="space-y-1 text-xs">
-                    {orderBook.asks.map((ask: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex justify-between text-red"
-                      >
-                        <span>{ask.price.toFixed(2)}</span>
-                        <span>{ask.quantity.toFixed(6)}</span>
-                      </div>
-                    ))}
-
-                    <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
-                      Spread:
-                      {orderBook.bids.length > 0 && orderBook.asks.length > 0
-                        ? (
-                            ((orderBook.asks[0].price -
-                              orderBook.bids[0].price) /
-                              orderBook.bids[0].price) *
-                            100
-                          ).toFixed(4) + "%"
-                        : "0%"}
+          {/* Sidebar */}
+          <div className="space-y-2 lg:space-y-2">
+            <TradePanel price={Number(price)} />
+            {/* Order Book */}
+            <div className="h-[440px] overflow-y-auto">
+              <div className="bg-bg rounded-lg p-4 border border-[#1f2328] max-h-[500px] h-[500px]! overflow-hidden">
+                <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">Order Book</h3>
+                <div className="space-y-1 text-xs">
+                  {orderBook.asks.map((ask, i) => (
+                    <div key={i} className="flex justify-between text-red">
+                      <span>{ask.price.toFixed(2)}</span>
+                      <span>{ask.quantity.toFixed(6)}</span>
                     </div>
-
-                    {orderBook.bids.map((bid: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex justify-between text-green"
-                      >
-                        <span>{bid.price.toFixed(2)}</span>
-                        <span>{bid.quantity.toFixed(6)}</span>
-                      </div>
-                    ))}
+                  ))}
+                  <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
+                    Spread: {orderBook.bids.length && orderBook.asks.length ? (((orderBook.asks[0].price - orderBook.bids[0].price)/orderBook.bids[0].price)*100).toFixed(4) + "%" : "0%"}
                   </div>
+                  {orderBook.bids.map((bid, i) => (
+                    <div key={i} className="flex justify-between text-green">
+                      <span>{bid.price.toFixed(2)}</span>
+                      <span>{bid.quantity.toFixed(6)}</span>
+                    </div>
+                  ))}
                 </div>
-                
               </div>
             </div>
           </div>
