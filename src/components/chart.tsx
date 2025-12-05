@@ -295,7 +295,7 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
   // WebSocket connections with proper cleanup
   const setupWebSockets = () => {
     setupTradeWebSocket();
-    // setupKlineWebSocket();
+    setupKlineWebSocket();
     setupDepthWebSocket();
   };
 
