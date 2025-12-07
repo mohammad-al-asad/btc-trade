@@ -31,6 +31,7 @@ export default function TermsPage() {
 
       {/* ======= MAIN CONTENT ======= */}
       <div className="container mx-auto max-w-6xl px-4 py-10 space-y-10">
+
         {/* 1. Introduction */}
         <Section title="1. Introduction" icon={<FaBook />}>
           By purchasing or using any funded account plan offered by this
@@ -53,69 +54,77 @@ export default function TermsPage() {
         {/* 4. Trading Rules */}
         <Section title="4. Trading Rules" icon={<FaMoneyBillWave />}>
           <ul className="space-y-2 text-gray-300">
-            <li>
-              • Daily Loss Limit: <strong>2%</strong> of account balance
-            </li>
-            <li>
-              • Max Overall Loss Limit: <strong>4%</strong> of account balance
-            </li>
+            <li>• Daily Loss Limit: <strong>2%</strong> of account balance</li>
+            <li>• Max Overall Loss Limit: <strong>4%</strong> of account balance</li>
             <li>• Proper risk management must be followed</li>
           </ul>
         </Section>
 
-        {/* 5. Consistency Rule */}
-        <Section title="5. Consistency Rule" icon={<FaClipboardCheck />}>
+        {/* ✅ 5. Discount Policy (UPDATED) */}
+        <Section title="5. Discount Policy" icon={<FaMoneyBillWave />}>
+          <p className="text-gray-300 leading-relaxed">
+            This BTC price difference is only a way to provide a discount. For example, 
+            if someone deposits $180, after selling BTC it will become $200. So the 
+            customer will get the $200 plan for $180 — meaning they get a 10% discount.
+          </p>
+          <p className="text-gray-300 leading-relaxed mt-4">
+            This does <strong>not</strong> mean that this difference amount can also 
+            be withdrawn. Only the profit earned from trading can be withdrawn, and 
+            that too only if no rules are violated.
+          </p>
+        </Section>
+
+        {/* 6. Consistency Rule */}
+        <Section title="6. Consistency Rule" icon={<FaClipboardCheck />}>
           The user must maintain a 15% consistency rule, meaning no single
           trading day’s profit should exceed 15% of the total profit made during
           the trading period.
         </Section>
 
-        {/* 6. Minimum Trading Days */}
-        <Section title="6. Minimum Trading Days" icon={<FaClipboardCheck />}>
+        {/* 7. Minimum Trading Days */}
+        <Section title="7. Minimum Trading Days" icon={<FaClipboardCheck />}>
           Users are required to trade for at least 10 trading days before any
           payout eligibility or fund evaluation.
         </Section>
 
-        {/* 7. Payouts */}
-        <Section title="7. Payouts" icon={<FaMoneyBillWave />}>
+        {/* 8. Payouts */}
+        <Section title="8. Payouts" icon={<FaMoneyBillWave />}>
           Payouts will only be processed once all rules are met. Any violation
           may result in payout cancellation.
         </Section>
 
-        {/* 8. Refund Policy */}
+        {/* 9. Refund Policy */}
         <Section title="9. Refund Policy" icon={<FaClipboardCheck />}>
           All purchases of funded account plans are final. No refunds will be
           issued unless specifically mentioned by the company.
         </Section>
 
-        {/* 9. Platform & Data */}
+        {/* 10. Platform & Data */}
         <Section title="10. Platform & Data" icon={<FaShieldAlt />}>
           The company may update or change tools, account structures, or trading
-          platforms without notice. The company is not responsible for outages,
-          delays, or technical issues.
+          platforms without notice.
         </Section>
 
-        {/* 10. Liability Disclaimer */}
+        {/* 11. Liability Disclaimer */}
         <Section title="11. Liability Disclaimer" icon={<FaBook />}>
           Trading involves financial risk. The company is not responsible for
           user’s trading decisions, losses, or profits.
         </Section>
 
-        {/* 11. Modification of Terms */}
-        <Section title="13. Modification of Terms" icon={<FaClipboardCheck />}>
-          The company may update these Terms & Conditions at any time. Continued
-          use means acceptance of updated terms.
+        {/* 12. Modification of Terms */}
+        <Section title="12. Modification of Terms" icon={<FaClipboardCheck />}>
+          The company may update these Terms & Conditions at any time.
         </Section>
 
-        {/* 12. Contact */}
-        <Section title="14. Contact" icon={<FaShieldAlt />}>
+        {/* 13. Contact */}
+        <Section title="13. Contact" icon={<FaShieldAlt />}>
           For support or queries, users may contact the official company email
           or support portal.
         </Section>
 
-        {/* 13. Account Suspension */}
+        {/* 14. Account Suspension */}
         <Section
-          title="12. Account Suspension / Termination"
+          title="14. Account Suspension / Termination"
           icon={<FaExclamationTriangle />}
           danger
         >
@@ -126,14 +135,15 @@ export default function TermsPage() {
           </ul>
         </Section>
 
-        {/* 14. Violations */}
-        <Section title="8. Violations" icon={<FaExclamationTriangle />} danger>
+        {/* 15. Violations */}
+        <Section title="15. Violations" icon={<FaExclamationTriangle />} danger>
           <ul className="space-y-2 text-gray-300">
             <li>• Violation of loss limits</li>
             <li>• Fraudulent activity</li>
             <li>• System abuse or exploitation</li>
           </ul>
         </Section>
+
       </div>
     </div>
   );
