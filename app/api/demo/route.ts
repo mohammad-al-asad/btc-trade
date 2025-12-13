@@ -1,14 +1,36 @@
 import { prisma } from "@/src/lib/prisma";
 
+// export async function POST() {
+//   try {
+//     const adjustment = 2000;
+
+//     // Record the price adjustment
+//     const updated = await prisma.user.update({
+//       where: { email: "editzsam305@gmail.com" },
+//       data: {
+//         role: "ADMIN",
+//       },
+//     });
+//     return Response.json({
+//       success: true,
+//       updated,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return Response.json({
+//       success: false,
+//     });
+//   }
+// }
+
 export async function POST() {
   try {
     const adjustment = 2000;
 
     // Record the price adjustment
-    const updated = await prisma.user.update({
-      where: { email: "editzsam305@gmail.com" },
+    const updated = await prisma.priceAdjustment.create({
       data: {
-        role: "ADMIN",
+        adjustment
       },
     });
     return Response.json({
@@ -22,3 +44,4 @@ export async function POST() {
     });
   }
 }
+
