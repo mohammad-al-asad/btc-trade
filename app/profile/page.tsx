@@ -110,7 +110,10 @@ export default function ProfilePage() {
       );
       const price = await fetch("/api/btc-cur-price")
         .then((res) => res.json())
-        .then((data) => Number(data.price));
+        .then((data) => {
+          console.log(data.price);
+          return Number(data.price);
+        });
       console.log(price);
 
       const { modifyData } = await res.json();
