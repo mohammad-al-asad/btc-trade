@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import Binance from "node-binance-api";
@@ -10,11 +11,13 @@ export const getCurrentUser = async () => {
 };
 
 export const getCurrentPrice = async () => {
-  const binance = new Binance();
-  const ticker = await binance.prices("BTCUSDT");
+  const res = await fetch(
+    "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+  );
+  const data = await res.json();
 
   const adjustment = await getBtcModifyData();
-  return Number(getModifiedBtc(adjustment, ticker.BTCUSDT.toString()));
+  return Number(getModifiedBtc(adjustment, data.price.toString()));
 };
 
 export const futureTradeAutoCancel = async () => {
