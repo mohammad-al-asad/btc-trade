@@ -17,7 +17,7 @@ export const getCurrentPrice = async () => {
   const data = await res.json();
 
   const adjustment = await getBtcModifyData();
-  return Number(getModifiedBtc(adjustment, data.price.toString()));
+  return Number(getModifiedBtc(adjustment, data.price));
 };
 
 export const futureTradeAutoCancel = async () => {
