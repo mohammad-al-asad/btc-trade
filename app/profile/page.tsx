@@ -112,9 +112,9 @@ export default function ProfilePage() {
         .then((res) => res.json())
         .then((data) => {
           console.log(data.price);
+          console.log(typeof data.price);
           return Number(data.price);
         });
-      console.log(price);
 
       const { modifyData } = await res.json();
 
