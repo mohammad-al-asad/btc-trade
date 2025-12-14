@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { getCurrentPrice, getCurrentUser } from "@/src/lib/utili";
