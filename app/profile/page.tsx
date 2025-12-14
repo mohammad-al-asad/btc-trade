@@ -111,6 +111,7 @@ export default function ProfilePage() {
       const price = await fetch("/api/btc-cur-price")
         .then((res) => res.json())
         .then((data) => Number(data.price));
+      console.log(price);
 
       const { modifyData } = await res.json();
 
@@ -219,7 +220,10 @@ export default function ProfilePage() {
 
               <div>
                 <p className="text-sm text-[#9aa3b2]">
-                  {userData?.email} <span className="text-black bg-main/80 px-1 ml-1 rounded-sm">{userData?.plan.type || "free"}</span>
+                  {userData?.email}{" "}
+                  <span className="text-black bg-main/80 px-1 ml-1 rounded-sm">
+                    {userData?.plan.type || "free"}
+                  </span>
                 </p>
                 <p className="text-2xl font-bold">{userData?.username}</p>
               </div>
