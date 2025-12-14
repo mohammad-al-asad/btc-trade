@@ -108,13 +108,10 @@ export default function ProfilePage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
       );
-      const price = await fetch("/api/btc-cur-price")
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data.price);
-          console.log(typeof data.price);
-          return Number(data.price);
-        });
+      const res2 = await fetch("/api/btc-cur-price");
+      const data = await res2.json();
+      const price = data.price;
+      console.log(price);
 
       const { modifyData } = await res.json();
 
