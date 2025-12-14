@@ -83,11 +83,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get current BTC price
-    const currentPrice = await getCurrentPrice();
-
     return NextResponse.json({
-      currentPrice,
       adjustments,
     });
   } catch (error) {
