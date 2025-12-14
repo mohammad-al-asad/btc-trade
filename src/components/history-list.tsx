@@ -74,7 +74,7 @@ export const OpenOrdersList = ({
                       : "text-red"
                   }`}
                 >
-                  {trade.growth.toFixed(2)}%
+                  {Number(trade.growth).toFixed(2)}%
                 </td>
                 <td className="text-start text-sm text-white">
                   ${Number(trade.profit).toFixed(2)}
@@ -159,16 +159,16 @@ export const ClosedOrdersList = ({
                   ₿{(trade.leverage * +trade.margin) / +trade.entryUSDT}
                 </td>
                 <td className="text-start text-sm text-white">
-                  ${(Number(trade.margin)*(+trade.entryUSDT)).toFixed(2)}
+                  ${(Number(trade.margin) * +trade.entryUSDT).toFixed(2)}
                 </td>
                 <td className="text-start text-sm text-white">
                   {trade.leverage}X
                 </td>
                 <td className="text-start text-sm text-white">
-                  ${(Number(trade.profit)*(+trade.entryUSDT)).toFixed(2)}
+                  ${(Number(trade.profit) * +trade.entryUSDT).toFixed(2)}
                 </td>
                 <td className="text-start text-sm text-white">
-                 ${(Number(trade.loss)*(+trade.entryUSDT)).toFixed(2)}
+                  ${(Number(trade.loss) * +trade.entryUSDT).toFixed(2)}
                 </td>
                 <td
                   className={`text-start text-sm capitalize  ${
