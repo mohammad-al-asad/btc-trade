@@ -9,8 +9,7 @@ import { RiLuggageDepositLine } from "react-icons/ri";
 import { BiMoneyWithdraw } from "react-icons/bi";
 import { IoLogOut } from "react-icons/io5";
 import profile from "@/public/profile.png";
-import { getCurrentPrice } from "@/src/lib/utili";
-import { usePrice } from "@/src/lib/store";
+import { getCurrentBtcPrice } from "@/src/lib/getCurrentBtcPrice";
 
 interface AssetItem {
   id: string;
@@ -104,14 +103,7 @@ export default function ProfilePage() {
   // Fetch BTC price
   const fetchBtcData = async () => {
     try {
-      // Get current BTC price from Binance
-      const res2 = await fetch("/api/btc-cur-price");
-      console.log(res2);
-
-      const data = await res2.json();
-      console.log(data);
-
-      const price = data.price;
+      const price = await getCurrentBtcPrice();
       console.log(price);
       setBtcPrice(price);
     } catch (error) {

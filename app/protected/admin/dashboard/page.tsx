@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getActualBtcPrice } from "@/src/lib/getActualBtcPrice";
 
 interface Transaction {
   id: string;
@@ -90,13 +91,13 @@ export default function AdminDashboard() {
       console.error("Error fetching transactions:", error);
     }
   };
-  
+
   const fetchBtcPrice = async () => {
     try {
       const response = await fetch("/api/admin/btc-price");
       if (response.ok) {
         const data = await response.json();
-        setCurrentBtcPrice(data.currentPrice);
+        setCurrentBtcPrice(await getActualBtcPrice());
         setPriceAdjustments(data.adjustments);
       }
     } catch (error) {
