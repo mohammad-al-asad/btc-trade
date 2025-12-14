@@ -105,9 +105,6 @@ export default function ProfilePage() {
   const fetchBtcData = async () => {
     try {
       // Get current BTC price from Binance
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
-      );
       const res2 = await fetch("/api/btc-cur-price");
       console.log(res2);
 
@@ -116,17 +113,7 @@ export default function ProfilePage() {
 
       const price = data.price;
       console.log(price);
-
-      const { modifyData } = await res.json();
-
-      const btcModifyFloat = parseFloat(modifyData.adjustment);
-      let currentBtcPrice: number;
-      if (btcModifyFloat < 0) {
-        currentBtcPrice = price - Math.abs(btcModifyFloat);
-      } else {
-        currentBtcPrice = btcModifyFloat + price;
-      }
-      setBtcPrice(currentBtcPrice);
+      setBtcPrice(price);
     } catch (error) {
       console.error("fetchBtcData:", error);
     }

@@ -1,14 +1,12 @@
+import { getCurrentPrice } from "@/src/lib/utili";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   try {
-    const res = await fetch(
-      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-    );
-    const data = await res.json();
+    const price = await getCurrentPrice();
 
     return NextResponse.json({
-      price: data.price,
+      price: price,
     });
   } catch (error) {
     console.log({ error });
