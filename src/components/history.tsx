@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { MdOutlineManageHistory } from "react-icons/md";
 import { useCurrentUser } from "../lib/hook";
