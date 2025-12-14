@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import TradingHistory from "@/src/components/history";
 import React from "react";
 

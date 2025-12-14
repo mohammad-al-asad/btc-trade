@@ -104,7 +104,6 @@ export default function ProfilePage() {
   const fetchBtcData = async () => {
     try {
       const price = await getCurrentBtcPrice();
-      console.log(price);
       setBtcPrice(price);
     } catch (error) {
       console.error("fetchBtcData:", error);
