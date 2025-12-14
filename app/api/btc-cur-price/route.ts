@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import Binance from "node-binance-api";
 
 export const GET = async (req: NextRequest) => {
   try {
-    const binance = new Binance();
-    const ticker = await binance.prices("BTCUSDT");
+    const res = await fetch(
+      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+    );
+    const data = await res.json();
+
     return NextResponse.json({
-      price: ticker.BTCUSDT,
+      price: data.price,
     });
   } catch (error) {
     console.log({ error });
