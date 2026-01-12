@@ -30,6 +30,7 @@ export const GET = async (req: NextRequest) => {
 
       const profitOrLoss =
         ((trade.leverage * Math.abs(priceMovement)) / 100) * trade.margin;
+      console.log("profitOrLoss", profitOrLoss);
 
       if (trade.trade == "LONG") {
         if (priceMovement > 0) {
@@ -53,7 +54,7 @@ export const GET = async (req: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    console.log("history: ",{ error });
+    console.log("history: ", { error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
