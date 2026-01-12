@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma } from "@/app/generated/prisma/client";
+import { getCurrentBtcPrice } from "@/src/lib/getCurrentBtcPrice";
 import { prisma } from "@/src/lib/prisma";
 import { getCurrentPrice, getCurrentUser } from "@/src/lib/utili";
 import { NextRequest, NextResponse } from "next/server";
@@ -20,7 +21,7 @@ export const GET = async (req: NextRequest) => {
       },
     });
 
-    const currentBTCPrice = await getCurrentPrice();
+    const currentBTCPrice = await getCurrentBtcPrice();
     const modifiedTrades = trades.map((trade: any) => {
       const priceMovement =
         ((+currentBTCPrice.toFixed(4) - +Number(trade.entryUSDT).toFixed(4)) /
