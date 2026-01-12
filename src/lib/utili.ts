@@ -21,7 +21,7 @@ export const getCurrentPrice = async () => {
     "adjustment",
     adjustment,
     "price",
-    data.price,
+    data,
     "modify",
     getModifiedBtc(adjustment, data.price)
   );
