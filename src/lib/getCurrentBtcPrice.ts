@@ -8,5 +8,13 @@ export const getCurrentBtcPrice = async () => {
   const data = await res.json();
 
   const adjustment = await getBtcModifyData();
+    console.log(
+    "adjustment",
+    adjustment,
+    "price",
+    data,
+    "modify",
+    getModifiedBtc(adjustment, data.price)
+  );
   return Number(getModifiedBtc(adjustment, data.price));
 };
