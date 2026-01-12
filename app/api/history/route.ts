@@ -31,7 +31,7 @@ export const GET = async (req: NextRequest) => {
 
       const profitOrLoss =
         ((trade.leverage * Math.abs(priceMovement)) / 100) * trade.margin;
-      console.log("profitOrLoss", profitOrLoss);
+      console.log("profitOrLoss", profitOrLoss,"currentBTCPrice",currentBTCPrice);
 
       if (trade.trade == "LONG") {
         if (priceMovement > 0) {
