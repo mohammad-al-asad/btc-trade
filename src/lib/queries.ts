@@ -9,7 +9,9 @@ export async function getUserAssets() {
 }
 
 export async function getTradeHistory() {
-  const btcPrice = getCurrentBtcPrice();
+  const btcPrice = await getCurrentBtcPrice();
+  console.log(btcPrice);
+  
   const res = await fetch(`api/history?btcPrice=${btcPrice}`, { cache: "no-store" });
 
   if (!res.ok) throw new Error("Failed to fetch Trade History");
