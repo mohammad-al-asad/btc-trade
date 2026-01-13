@@ -1,3 +1,5 @@
+import { getCurrentBtcPrice } from "./getCurrentBtcPrice";
+
 export async function getUserAssets() {
   const res = await fetch("api/assets", { cache: "no-store" });
 
@@ -7,7 +9,8 @@ export async function getUserAssets() {
 }
 
 export async function getTradeHistory() {
-  const res = await fetch("api/history", { cache: "no-store" });
+  const btcPrice = getCurrentBtcPrice();
+  const res = await fetch(`api/history?btcPrice=${btcPrice}`, { cache: "no-store" });
 
   if (!res.ok) throw new Error("Failed to fetch Trade History");
 
