@@ -8,6 +8,7 @@ import { getClosedTradeHistory, getTradeHistory } from "../lib/queries";
 import { ClosedOrdersList, OpenOrdersList } from "./history-list";
 import { LuSearchX } from "react-icons/lu";
 import DataLoading from "./data-loading";
+import { getCurrentBtcPrice } from "../lib/getCurrentBtcPrice";
 
 interface Order {
   id: string;
@@ -20,6 +21,7 @@ interface Order {
   status: "RUNNING" | "CANCELED" | "ENDED";
 }
 
+const btcPrice = getCurrentBtcPrice();
 const TradingHistory = () => {
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<"open" | "history">("open");
