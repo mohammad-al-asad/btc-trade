@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
-import Binance from "node-binance-api";
 import { prisma } from "./prisma";
 import { getModifiedBtc } from "./clientUtility";
 import { getBtcModifyData } from "./queries";

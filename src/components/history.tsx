@@ -8,6 +8,7 @@ import { getClosedTradeHistory, getTradeHistory } from "../lib/queries";
 import { ClosedOrdersList, OpenOrdersList } from "./history-list";
 import { LuSearchX } from "react-icons/lu";
 import DataLoading from "./data-loading";
+
 interface Order {
   id: string;
   tradeAmount: number;

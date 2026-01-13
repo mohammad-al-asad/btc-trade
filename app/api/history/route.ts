@@ -2,6 +2,7 @@
 import { prisma } from "@/src/lib/prisma";
 import { getCurrentPrice, getCurrentUser } from "@/src/lib/utili";
 import { NextRequest, NextResponse } from "next/server";
+import Binance from "node-binance-api";
 
 export const GET = async (req: NextRequest) => {
   try {
@@ -19,7 +20,11 @@ export const GET = async (req: NextRequest) => {
       },
     });
 
-    const currentBTCPrice = await getCurrentPrice();
+    // const currentBTCPrice = await getCurrentPrice();
+    const binance = new Binance();
+    const ticker = await binance.prices("BTCUSDT");
+    
+    const currentBTCPrice = Number(ticker.BTCUSDT);
     console.log(currentBTCPrice);
     console.log(currentBTCPrice.toFixed(4));
 
