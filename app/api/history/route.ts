@@ -21,7 +21,6 @@ export const GET = async (req: NextRequest) => {
 
     const { searchParams } = new URL(req.url);
     const currentBTCPrice = Number( searchParams.get("btcPrice"));
-    console.log(currentBTCPrice);
 
     const modifiedTrades = trades.map((trade: any) => {
       const priceMovement =
@@ -32,12 +31,6 @@ export const GET = async (req: NextRequest) => {
 
       const profitOrLoss =
         ((trade.leverage * Math.abs(priceMovement)) / 100) * trade.margin;
-      console.log(
-        "profitOrLoss",
-        profitOrLoss,
-        "currentBTCPrice",
-        currentBTCPrice
-      );
 
       if (trade.trade == "LONG") {
         if (priceMovement > 0) {

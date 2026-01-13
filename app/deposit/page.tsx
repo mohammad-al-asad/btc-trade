@@ -54,9 +54,7 @@ export default function DepositPage() {
       });
 
       const result = await response.json();
-      console.log(result);
       
-
       if (response.ok) {
         setMessage("Deposit successful! Redirecting...");
         setTimeout(() => router.push("/profile"), 2000);

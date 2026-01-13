@@ -10,9 +10,10 @@ export async function getUserAssets() {
 
 export async function getTradeHistory() {
   const btcPrice = await getCurrentBtcPrice();
-  console.log(btcPrice);
-  
-  const res = await fetch(`api/history?btcPrice=${btcPrice}`, { cache: "no-store" });
+
+  const res = await fetch(`api/history?btcPrice=${btcPrice}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) throw new Error("Failed to fetch Trade History");
 
@@ -27,7 +28,9 @@ export async function getClosedTradeHistory() {
 }
 
 export async function getBtcModifyData() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/btc-modify`
+  );
   const data = await res.json();
   return data.modifyData.adjustment;
 }
