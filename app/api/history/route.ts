@@ -19,10 +19,8 @@ export const GET = async (req: NextRequest) => {
       },
     });
 
-    // const currentBTCPrice = await getCurrentPrice();
-
     const { searchParams } = new URL(req.url);
-    const currentBTCPrice = Number(searchParams.get("btcPrice"));
+    const currentBTCPrice = Number( searchParams.get("btcPrice"));
     console.log(currentBTCPrice);
 
     const modifiedTrades = trades.map((trade: any) => {
