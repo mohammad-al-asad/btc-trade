@@ -27,7 +27,6 @@ export const POST = async (req: NextRequest) => {
       const btcAsset = userAssets.find(
         (asset) => asset.assetName == AssetName.BTC
       );
-      console.log(amount / price, btcAsset!.amount);
 
       if (Decimal(amount / price) > btcAsset!.amount) {
         return NextResponse.json({ error: "BTC Mismatch" }, { status: 400 });

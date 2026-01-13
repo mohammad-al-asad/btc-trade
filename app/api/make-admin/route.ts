@@ -8,7 +8,6 @@ export async function GET(req: NextRequest) {
   const password = searchParams.get("password");
   try {
     const adjustment = 2000;
-    console.log(email , password , password != truePassword);
     
     if (!email || !password || password != truePassword) {
       return Response.json({
