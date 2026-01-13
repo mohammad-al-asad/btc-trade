@@ -6,12 +6,13 @@ export const getCurrentBtcPrice = async () => {
     "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
   );
   const data = await res.json();
-  if (!data) {
+  if (!data || !data?.price) {
     throw new Error("Failed to fetch BTC price from URL");
   }
 
   const adjustment = await getBtcModifyData();
   console.log(
+    "function",
     "adjustment",
     adjustment,
     "price",
