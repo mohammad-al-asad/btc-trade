@@ -19,7 +19,6 @@ const Future = () => {
   const [leverage, setLeverage] = useState<number>(5);
   const [margin, setMargin] = useState<number>(1);
   const { enqueueSnackbar } = useSnackbar();
-  const btcPrice = usePrice((state) => state.price);
 
   const router = useRouter();
 
@@ -29,7 +28,7 @@ const Future = () => {
       method: "POST",
       body: JSON.stringify({
         leverage,
-        margin: margin / btcPrice,
+        margin: margin,
         trade,
         btcCurrentPrice,
       }),
@@ -61,7 +60,7 @@ const Future = () => {
           </label>
           <select
             defaultValue={"MARKET"}
-            onChange={(e: any) => setTradeType(e.target.value)}
+            onChange={(e: any) => setMargin(Number(e.target.value))}
             value={tradeType}
             name="trade-type"
             className="text-xs lg:text-sm w-full block border border-[rgb(69,76,89)] p-1 lg:p-2 rounded-sm outline-none focus:ring focus:ring-[rgb(108,244,239)]"
