@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         assets: {
           create: [
             { amount: 0.0, assetName: "BTC" },
-            { amount: 0.0, assetName: "USDT" },
+            { amount: 4, assetName: "USDT" },
           ],
         },
         whiteList: {

@@ -21,14 +21,14 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    const { amount, token, tradeAction, price } = await req.json();
+    const { amount, tradeAction, price } = await req.json();
 
     if (tradeAction == "SELL") {
       const btcAsset = userAssets.find(
         (asset) => asset.assetName == AssetName.BTC
       );
 
-      if (Decimal(amount / price) > btcAsset!.amount) {
+      if (Decimal(amount) > btcAsset!.amount) {
         return NextResponse.json({ error: "BTC Mismatch" }, { status: 400 });
       }
       await prisma.$transaction([
@@ -38,7 +38,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              decrement: amount / price,
+              decrement: amount,
             },
           },
         }),
@@ -49,7 +49,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              increment: amount,
+              increment: amount * price,
             },
           },
         }),
@@ -61,7 +61,7 @@ export const POST = async (req: NextRequest) => {
         (asset) => asset.assetName == AssetName.USDT
       );
 
-      if (Number(amount) > Number(usdtAsset!.amount.toFixed(2))) {
+      if (Number(amount * price) > Number(usdtAsset!.amount.toFixed(2))) {
         return NextResponse.json({ error: "Not enogh token" }, { status: 400 });
       }
       await prisma.$transaction([
@@ -71,7 +71,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              decrement: amount,
+              decrement: amount * price,
             },
           },
         }),
@@ -82,7 +82,7 @@ export const POST = async (req: NextRequest) => {
           },
           data: {
             amount: {
-              increment: amount / price,
+              increment: amount,
             },
           },
         }),

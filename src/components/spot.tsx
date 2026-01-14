@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
+import  { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserAssets } from "../lib/queries";
 import { AiFillPlusCircle } from "react-icons/ai";
@@ -9,12 +9,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
 import { usePrice } from "../lib/store";
+import { useSession } from "next-auth/react";
+
 const Spot = () => {
+  const {status} = useSession();
   const { price } = usePrice((state) => state);
   const [quantity, setQuantity] = useState<any>(1);
   const { data } = useQuery({
     queryKey: ["btc-price"],
     queryFn: getUserAssets,
+    enabled:status == "authenticated",
     refetchInterval: 1000,
   });
 
@@ -33,7 +37,7 @@ const Spot = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: quantity * price,
+        amount: quantity,
         token: "BTC",
         tradeAction: tradeType,
         price,
@@ -59,7 +63,9 @@ const Spot = () => {
           step="0.001"
         />
         <button
-          onClick={() => setQuantity(Number(data.payload.btc.amount).toFixed(10))}
+          onClick={() =>
+            setQuantity(Number(data.payload.btc.amount).toFixed(10))
+          }
           className="w-fit px-4 text-main text-[11px] flex gap-1 items-center cursor-pointer"
         >
           max
@@ -98,7 +104,7 @@ export default Spot;
 
 const AssetLabels = ({ usdt, btc }: { usdt: number; btc: string }) => {
   return (
-    <div className="space-y-1.5 sticky bottom-0">
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <span className="text-xs text-gray-300">Avbl (USDT)</span>
         {/* <span>{data.payload.usdt}</span> */}

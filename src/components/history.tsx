@@ -8,7 +8,7 @@ import { getClosedTradeHistory, getTradeHistory } from "../lib/queries";
 import { ClosedOrdersList, OpenOrdersList } from "./history-list";
 import { LuSearchX } from "react-icons/lu";
 import DataLoading from "./data-loading";
-import { getCurrentBtcPrice } from "../lib/getCurrentBtcPrice";
+import { useSession } from "next-auth/react";
 
 interface Order {
   id: string;
@@ -21,14 +21,14 @@ interface Order {
   status: "RUNNING" | "CANCELED" | "ENDED";
 }
 
-const btcPrice = getCurrentBtcPrice();
 const TradingHistory = () => {
+  const { status } = useSession();
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<"open" | "history">("open");
-
   const { data, error, isLoading } = useQuery({
     queryKey: ["trade-history"],
     queryFn: getTradeHistory,
+    enabled: status == "authenticated",
     refetchInterval: 1000,
   });
 
@@ -39,32 +39,8 @@ const TradingHistory = () => {
   } = useQuery({
     queryKey: ["closed-trade-history"],
     queryFn: getClosedTradeHistory,
-    refetchInterval: 1000,
+    enabled: status == "authenticated",
   });
-
-  // Mock data for open orders
-  const openOrders: Order[] = [
-    {
-      id: "1",
-      tradeAmount: 0.5,
-      profit: 150.25,
-      loss: -50.75,
-      growth: "+2.5%",
-      leverage: 10,
-      entryUsdt: 2500,
-      status: "RUNNING",
-    },
-    {
-      id: "2",
-      tradeAmount: 0.3,
-      profit: 75.5,
-      loss: -25.25,
-      growth: "+1.2%",
-      leverage: 5,
-      entryUsdt: 1800,
-      status: "RUNNING",
-    },
-  ];
 
   // Mock data for order history
   const orderHistory: Order[] = [
@@ -89,23 +65,6 @@ const TradingHistory = () => {
       status: "CANCELED",
     },
   ];
-
-  const getStatusColor = (status: Order["status"]) => {
-    switch (status) {
-      case "RUNNING":
-        return "text-green-500";
-      case "ENDED":
-        return "text-blue-500";
-      case "CANCELED":
-        return "text-red-500";
-      default:
-        return "text-gray-500";
-    }
-  };
-
-  const getProfitLossColor = (value: number) => {
-    return value >= 0 ? "text-green-500" : "text-red-500";
-  };
 
   const getOpenTrades = () => {
     const trades = data?.payload?.trades?.filter(

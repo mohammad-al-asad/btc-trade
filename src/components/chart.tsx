@@ -14,7 +14,10 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
   const size = useSize();
   const [candleData, setCandleData] = useState<any[]>([]);
   const [volumeData, setVolumeData] = useState<any[]>([]);
-  const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({ bids: [], asks: [] });
+  const [orderBook, setOrderBook] = useState<{ bids: any[]; asks: any[] }>({
+    bids: [],
+    asks: [],
+  });
   const [timeframe, setTimeframe] = useState("1d");
   const [chartError, setChartError] = useState<string | null>(null);
   const [indicators, setIndicators] = useState({ ma25: 0, ma99: 0 });
@@ -44,11 +47,21 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
     try {
       // Main Candlestick Chart
       const chart = createChart(chartContainerRef.current, {
-        layout: { background: { color: "rgb(24,26,31)" }, textColor: "#cfd2d3" },
-        grid: { vertLines: { color: "#1f2328" }, horzLines: { color: "#1f2328" } },
+        layout: {
+          background: { color: "rgb(24,26,31)" },
+          textColor: "#cfd2d3",
+        },
+        grid: {
+          vertLines: { color: "#1f2328" },
+          horzLines: { color: "#1f2328" },
+        },
         width: chartContainerRef.current.clientWidth,
         height: size === "SM" ? 220 : size === "MD" ? 280 : 400,
-        timeScale: { timeVisible: true, secondsVisible: false, borderColor: "#1f2328" },
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: false,
+          borderColor: "#1f2328",
+        },
       });
 
       const candleSeries = chart.addCandlestickSeries({
@@ -64,12 +77,22 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
       // Volume Chart
       if (volumeChartContainerRef.current) {
-        const volumeChart:any = createChart(volumeChartContainerRef.current, {
-          layout: { background: { color: "rgb(24,26,31)" }, textColor: "#cfd2d3" },
-          grid: { vertLines: { color: "#1f2328" }, horzLines: { color: "#1f2328" } },
+        const volumeChart: any = createChart(volumeChartContainerRef.current, {
+          layout: {
+            background: { color: "rgb(24,26,31)" },
+            textColor: "#cfd2d3",
+          },
+          grid: {
+            vertLines: { color: "#1f2328" },
+            horzLines: { color: "#1f2328" },
+          },
           width: volumeChartContainerRef.current.clientWidth,
           height: size === "SM" ? 80 : size === "MD" ? 110 : 150,
-          timeScale: { timeVisible: true, secondsVisible: false, borderColor: "#1f2328" },
+          timeScale: {
+            timeVisible: true,
+            secondsVisible: false,
+            borderColor: "#1f2328",
+          },
         });
 
         const volumeSeries = volumeChart.addHistogramSeries({
@@ -83,19 +106,23 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
         volumeSeriesRef.current = volumeSeries;
 
         // Sync charts
-        const unsubscribe = chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
-          if (!logicalRange || isSyncingRef.current) return;
-          isSyncingRef.current = true;
-          volumeChart.timeScale().setVisibleLogicalRange(logicalRange);
-          setTimeout(() => (isSyncingRef.current = false), 10);
-        });
+        const unsubscribe = chart
+          .timeScale()
+          .subscribeVisibleLogicalRangeChange((logicalRange) => {
+            if (!logicalRange || isSyncingRef.current) return;
+            isSyncingRef.current = true;
+            volumeChart.timeScale().setVisibleLogicalRange(logicalRange);
+            setTimeout(() => (isSyncingRef.current = false), 10);
+          });
         timescaleUnsubRef.current = unsubscribe;
       }
 
       // Window resize
       const handleResize = () => {
         chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
-        volumeChartRef.current?.applyOptions({ width: volumeChartContainerRef.current?.clientWidth });
+        volumeChartRef.current?.applyOptions({
+          width: volumeChartContainerRef.current?.clientWidth,
+        });
       };
       window.addEventListener("resize", handleResize);
 
@@ -150,19 +177,23 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      const formattedCandles = data.map((c: any) => ({
-        time: Math.floor(c[0] / 1000),
-        open: getModifiedBtc(btcModify, c[1]),
-        high: getModifiedBtc(btcModify, c[2]),
-        low: getModifiedBtc(btcModify, c[3]),
-        close: getModifiedBtc(btcModify, c[4]),
-      })).sort((a:any, b:any) => a.time - b.time); // ensure ascending
+      const formattedCandles = data
+        .map((c: any) => ({
+          time: Math.floor(c[0] / 1000),
+          open: getModifiedBtc(btcModify, c[1]),
+          high: getModifiedBtc(btcModify, c[2]),
+          low: getModifiedBtc(btcModify, c[3]),
+          close: getModifiedBtc(btcModify, c[4]),
+        }))
+        .sort((a: any, b: any) => a.time - b.time); // ensure ascending
 
-      const formattedVolume = data.map((c: any) => ({
-        time: Math.floor(c[0] / 1000),
-        value: getModifiedBtc(btcModify, c[5]),
-        color: parseFloat(c[4]) >= parseFloat(c[1]) ? "#0ecb81" : "#f6465d",
-      })).sort((a:any, b:any) => a.time - b.time);
+      const formattedVolume = data
+        .map((c: any) => ({
+          time: Math.floor(c[0] / 1000),
+          value: getModifiedBtc(btcModify, c[5]),
+          color: parseFloat(c[4]) >= parseFloat(c[1]) ? "#0ecb81" : "#f6465d",
+        }))
+        .sort((a: any, b: any) => a.time - b.time);
 
       setCandleData(formattedCandles);
       setVolumeData(formattedVolume);
@@ -175,7 +206,8 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
       // Simple indicators
       const closes = formattedCandles.map((c: any) => c.close);
-      const avg = closes.reduce((sum:any, v:any) => sum + v, 0) / closes.length;
+      const avg =
+        closes.reduce((sum: any, v: any) => sum + v, 0) / closes.length;
       setIndicators({ ma25: avg, ma99: avg * 1.2 });
     } catch (err) {
       console.error("Fetch historical error:", err);
@@ -187,7 +219,9 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
   const setupWebSockets = () => {
     // Trade
     if (tradeWsRef.current) tradeWsRef.current.close();
-    const tradeWs = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+    const tradeWs = new WebSocket(
+      "wss://stream.binance.com:9443/ws/btcusdt@trade"
+    );
     tradeWs.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
@@ -202,7 +236,9 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
     // Kline
     if (klineWsRef.current) klineWsRef.current.close();
-    const klineWs = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@kline_${timeframe}`);
+    const klineWs = new WebSocket(
+      `wss://stream.binance.com:9443/ws/btcusdt@kline_${timeframe}`
+    );
     klineWs.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
@@ -228,13 +264,25 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
     // Depth
     if (depthWsRef.current) depthWsRef.current.close();
-    const depthWs = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms");
+    const depthWs = new WebSocket(
+      "wss://stream.binance.com:9443/ws/btcusdt@depth20@100ms"
+    );
     depthWs.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
         setOrderBook({
-          bids: data.bids.slice(0, 10).map((b: any) => ({ price: parseFloat(b[0]), quantity: parseFloat(b[1]) })),
-          asks: data.asks.slice(0, 10).map((a: any) => ({ price: parseFloat(a[0]), quantity: parseFloat(a[1]) })),
+          bids: data.bids
+            .slice(0, 10)
+            .map((b: any) => ({
+              price: parseFloat(b[0]),
+              quantity: parseFloat(b[1]),
+            })),
+          asks: data.asks
+            .slice(0, 10)
+            .map((a: any) => ({
+              price: parseFloat(a[0]),
+              quantity: parseFloat(a[1]),
+            })),
         });
       } catch {}
     };
@@ -280,37 +328,61 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
   return (
     <div className="min-h-screen bg-[rgb(12,14,17)] text-white">
       <Header />
-      <div className="container mx-auto p-2">
+      <div className="max-w-[1500px] mx-auto p-2">
         {/* Chart Header */}
         <div className="bg-bg p-2 lg:p-3 rounded-sm md:rounded-md lg:rounded-lg mb-2 w-full">
           <div className="flex flex-col md:flex-row justify-between items-center flex-1">
             <div className="grid grid-cols-2 md:flex gap-2 lg:gap-4 justify-between md:justify-start space-x-4 w-full">
               <div>
                 <h1 className="text-lg lg:ext-xl font-bold">BTC/USDT</h1>
-                <div className="text-xs lg:text-sm text-gray-400">{timeframe.toUpperCase()} · Binance</div>
+                <div className="text-xs lg:text-sm text-gray-400">
+                  {timeframe.toUpperCase()} · Binance
+                </div>
               </div>
               <div>
                 {price && (
                   <div
                     style={{
-                      color: previousPrice !== null ? (price > previousPrice ? "#0ecb81" : "#f6465d") : "#0ecb81",
+                      color:
+                        previousPrice !== null
+                          ? price > previousPrice
+                            ? "#0ecb81"
+                            : "#f6465d"
+                          : "#0ecb81",
                     }}
                     className="text-lg lg:text-xl font-semibold text-end"
                   >
-                    ${price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {price.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </div>
                 )}
               </div>
               <div className="text-sm w-full">
                 <div className="flex space-x-4 w-full">
-                  <span className="text-xs lg:text-sm">O {candleData.slice(-1)[0]?.open.toFixed(4) || "0.0000"}</span>
-                  <span className="text-xs lg:text-sm">H {candleData.slice(-1)[0]?.high.toFixed(4) || "0.0000"}</span>
-                  <span className="text-xs lg:text-sm">L {candleData.slice(-1)[0]?.low.toFixed(4) || "0.0000"}</span>
-                  <span className="text-xs lg:text-sm">C {price?.toFixed(4) || "0.0000"}</span>
+                  <span className="text-xs lg:text-sm">
+                    O {candleData.slice(-1)[0]?.open.toFixed(4) || "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm">
+                    H {candleData.slice(-1)[0]?.high.toFixed(4) || "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm">
+                    L {candleData.slice(-1)[0]?.low.toFixed(4) || "0.0000"}
+                  </span>
+                  <span className="text-xs lg:text-sm">
+                    C {price?.toFixed(4) || "0.0000"}
+                  </span>
                 </div>
-                <div className={`font-semibold text-[10px] lg:text-xs ${priceChange.change >= 0 ? "text-green" : "text-red"}`}>
+                <div
+                  className={`font-semibold text-[10px] lg:text-xs ${
+                    priceChange.change >= 0 ? "text-green" : "text-red"
+                  }`}
+                >
                   {priceChange.change >= 0 ? "+" : ""}
-                  {priceChange.change.toFixed(4)} ({priceChange.percent >= 0 ? "+" : ""}{priceChange.percent.toFixed(2)}%)
+                  {priceChange.change.toFixed(4)} (
+                  {priceChange.percent >= 0 ? "+" : ""}
+                  {priceChange.percent.toFixed(2)}%)
                 </div>
               </div>
             </div>
@@ -322,7 +394,11 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                   <button
                     key={tf.value}
                     onClick={() => setTimeframe(tf.value)}
-                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${timeframe === tf.value ? "bg-[#2b3139]" : "hover:bg-[#2b3139]"}`}
+                    className={`p-1 md:px-2 md:py-1 text-xs rounded ${
+                      timeframe === tf.value
+                        ? "bg-[#2b3139]"
+                        : "hover:bg-[#2b3139]"
+                    }`}
                   >
                     {tf.label}
                   </button>
@@ -333,8 +409,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
           {/* Indicators */}
           <div className="flex space-x-4 text-xs text-gray-400 mt-1 mb-2">
-            <div>MA 25 close <span className="text-white">{indicators.ma25.toFixed(4)}</span></div>
-            <div>MA 99 close <span className="text-white">{indicators.ma99.toFixed(4)}</span></div>
+            <div>
+              MA 25 close{" "}
+              <span className="text-white">{indicators.ma25.toFixed(4)}</span>
+            </div>
+            <div>
+              MA 99 close{" "}
+              <span className="text-white">{indicators.ma99.toFixed(4)}</span>
+            </div>
           </div>
         </div>
 
@@ -342,8 +424,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           {/* Chart */}
           <div className="lg:col-span-3 h-fit rounded-lg">
-            <div ref={chartContainerRef} className="border-2 border-[#1f2328] bg-[#0b0e11] w-full rounded-t-lg overflow-hidden" />
-            <div ref={volumeChartContainerRef} className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden" />
+            <div
+              ref={chartContainerRef}
+              className="border-2 border-[#1f2328] bg-[#0b0e11] w-full rounded-t-lg overflow-hidden"
+            />
+            <div
+              ref={volumeChartContainerRef}
+              className="w-full border-2 border-[#1f2328] bg-[#0b0e11] mt-1 rounded-b-lg overflow-hidden"
+            />
             <div className="border-[#1f2328] border rounded-md overflow-hidden hidden md:block mt-2">
               <TradeHistory />
             </div>
@@ -351,11 +439,13 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
 
           {/* Sidebar */}
           <div className="space-y-2 lg:space-y-2">
-            <TradePanel price={Number(price)} />
+            <TradePanel />
             {/* Order Book */}
             <div className="h-[440px] overflow-y-auto">
               <div className="bg-bg rounded-lg p-4 border border-[#1f2328] max-h-[500px] h-[500px]! overflow-hidden">
-                <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">Order Book</h3>
+                <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-4">
+                  Order Book
+                </h3>
                 <div className="space-y-1 text-xs">
                   {orderBook.asks.map((ask, i) => (
                     <div key={i} className="flex justify-between text-red">
@@ -364,7 +454,14 @@ export default function TradingPage({ btcModify }: { btcModify: string }) {
                     </div>
                   ))}
                   <div className="text-center text-gray-400 my-2 border-t border-b border-[#1f2328] py-1">
-                    Spread: {orderBook.bids.length && orderBook.asks.length ? (((orderBook.asks[0].price - orderBook.bids[0].price)/orderBook.bids[0].price)*100).toFixed(4) + "%" : "0%"}
+                    Spread:{" "}
+                    {orderBook.bids.length && orderBook.asks.length
+                      ? (
+                          ((orderBook.asks[0].price - orderBook.bids[0].price) /
+                            orderBook.bids[0].price) *
+                          100
+                        ).toFixed(4) + "%"
+                      : "0%"}
                   </div>
                   {orderBook.bids.map((bid, i) => (
                     <div key={i} className="flex justify-between text-green">

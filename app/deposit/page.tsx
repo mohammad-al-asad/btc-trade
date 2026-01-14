@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import qr from "@/public/qr.jpg"; // BTC QR
-import usdtQR from "@/public/usdtQR.png"; // USDT QR
+import usdtQR from "@/public/usdtQR.jpeg"; // USDT QR
 import { FaCopy } from "react-icons/fa";
 
 export default function DepositPage() {
@@ -25,7 +25,7 @@ export default function DepositPage() {
   // Addresses
   const addresses = {
     btc: "1LWVfFQCxasdjo34dWtMn11EKS7GCERCZH",
-    usdt: "TH5pbgtKshyoP1XeUTF6nfuhtFN6NEcnLb",
+    usdt: "0xad8a52bbc6577866999c9d1077aeeab11efb599ba874e4be3527c5f32e593f60",
   };
 
   if (status === "unauthenticated") {
@@ -81,7 +81,7 @@ export default function DepositPage() {
                 : "bg-[#111] border-[#222] text-gray-300"
             }`}
           >
-            USDT (TRC20)
+            USDT (bep20)
           </button>
 
           <button
