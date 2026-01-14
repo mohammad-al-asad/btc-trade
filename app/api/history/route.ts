@@ -6,46 +6,56 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = async (req: NextRequest) => {
   try {
     const user = await getCurrentUser();
-    if (!user)
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication Error" },
         { status: 401 }
       );
+    }
 
-    const trades: any = await prisma.futureTrade.findMany({
-      where: { userId: user.id, status: "RUNNING" },
+    const trades = await prisma.futureTrade.findMany({
+      where: {
+        userId: user.id,
+        status: "RUNNING",
+      },
       orderBy: {
         createAt: "desc",
       },
     });
 
     const { searchParams } = new URL(req.url);
-    const currentBTCPrice = Number( searchParams.get("btcPrice"));
+    const currentBTCPrice = Number(searchParams.get("btcPrice"));
+
+    if (!currentBTCPrice) {
+      return NextResponse.json(
+        { error: "BTC price missing" },
+        { status: 400 }
+      );
+    }
 
     const modifiedTrades = trades.map((trade: any) => {
-      const priceMovement =
-        ((+currentBTCPrice.toFixed(4) - +Number(trade.entryUSDT).toFixed(4)) /
-          +Number(trade.entryUSDT).toFixed(4)) *
-        100;
-      trade.growth = priceMovement;
+      const priceChangePercent =
+        (currentBTCPrice - trade.entryUSDT) / trade.entryUSDT;
 
-      const profitOrLoss =
-        ((trade.leverage * Math.abs(priceMovement)) / 100) * trade.margin;
+      const pnl =
+        priceChangePercent * trade.leverage * trade.margin;
 
-      if (trade.trade == "LONG") {
-        if (priceMovement > 0) {
-          trade.profit = profitOrLoss * currentBTCPrice;
-        } else if (priceMovement < 0) {
-          trade.loss = profitOrLoss * currentBTCPrice;
-        }
-      } else if (trade.trade == "SHORT") {
-        if (priceMovement > 0) {
-          trade.loss = profitOrLoss * currentBTCPrice;
-        } else if (priceMovement < 0) {
-          trade.profit = profitOrLoss * currentBTCPrice;
-        }
+      trade.growth = priceChangePercent * 100; // %
+
+      trade.profit = 0;
+      trade.loss = 0;
+
+      if (trade.trade === "LONG") {
+        if (pnl > 0) trade.profit = pnl;
+        else trade.loss = Math.abs(pnl);
       }
-      trade.margin = trade.margin * trade.entryUSDT;
+
+      if (trade.trade === "SHORT") {
+        if (pnl < 0) trade.profit = Math.abs(pnl);
+        else trade.loss = pnl;
+      }
+
+      // margin stays USDT — DO NOT TOUCH
       return trade;
     });
 
@@ -54,7 +64,7 @@ export const GET = async (req: NextRequest) => {
       { status: 200 }
     );
   } catch (error) {
-    console.log("history: ", { error });
+    console.error("Future PnL Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

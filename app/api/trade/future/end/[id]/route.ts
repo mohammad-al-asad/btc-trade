@@ -8,89 +8,122 @@ export const PUT = async (
   context: { params: Promise<{ id: string }> }
 ) => {
   try {
+    // 1️⃣ AUTH
     const user = await getCurrentUser();
-    if (!user)
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication Error" },
         { status: 401 }
       );
+    }
 
+    // 2️⃣ FIND TRADE
     const tradeId = (await context.params).id;
     const trade = await prisma.futureTrade.findUnique({
       where: { id: tradeId },
     });
-    if (!trade)
+
+    if (!trade) {
       return NextResponse.json({ error: "Trade not found" }, { status: 404 });
+    }
 
     if (trade.status !== "RUNNING") {
       return NextResponse.json(
-        { error: "Trade has already Canceled or Ended" },
-        { status: 404 }
+        { error: "Trade already closed or canceled" },
+        { status: 400 }
       );
     }
+
+    // 3️⃣ GET CURRENT BTC PRICE
     const { searchParams } = new URL(req.url);
     const currentBTCPrice = Number(searchParams.get("btcPrice"));
 
-    const assetUpdateData: Prisma.AssetUpdateInput = {};
-    const tradeUpdateData: Prisma.FutureTradeUpdateInput = {};
+    if (!currentBTCPrice || currentBTCPrice <= 0) {
+      return NextResponse.json({ error: "Invalid BTC price" }, { status: 400 });
+    }
 
-    const priceMovement =
-      ((+currentBTCPrice.toFixed(4) - +Number(trade.entryUSDT).toFixed(4)) /
-        +Number(trade.entryUSDT).toFixed(4)) *
-      100;
-    const profitOrLoss =
-      ((trade.leverage * Math.abs(priceMovement)) / 100) * +trade.margin;
+    // 4️⃣ CALCULATIONS (USDT-based)
+    const entryPrice = Number(trade.entryUSDT);
+    const margin = Number(trade.margin);
+    const leverage = Number(trade.leverage);
 
-    tradeUpdateData.status = "ENDED";
+    const priceMovementPercent =
+      ((currentBTCPrice - entryPrice) / entryPrice) * 100;
 
-    if (trade.trade == "LONG") {
-      if (priceMovement > 0) {
-        assetUpdateData.amount = {
-          increment: profitOrLoss + +trade.margin,
-        };
-        tradeUpdateData.profit = profitOrLoss;
-      } else if (priceMovement < 0) {
-        assetUpdateData.amount = {
-          increment: Math.max(+trade.margin - profitOrLoss, 0),
-        };
-        tradeUpdateData.loss = profitOrLoss;
-      }
-    } else if (trade.trade == "SHORT") {
-      if (priceMovement > 0) {
-        assetUpdateData.amount = {
-          increment: Math.max(+trade.margin - profitOrLoss, 0),
-        };
-        tradeUpdateData.loss = profitOrLoss;
-      } else if (priceMovement < 0) {
-        assetUpdateData.amount = {
-          increment: +trade.margin + profitOrLoss,
-        };
-        tradeUpdateData.profit = profitOrLoss;
+    const pnl = (Math.abs(priceMovementPercent) * leverage * margin) / 100;
+
+    let finalBalanceChange = 0;
+
+    const tradeUpdateData: Prisma.FutureTradeUpdateInput = {
+      status: "ENDED",
+    };
+
+    // 5️⃣ LONG / SHORT LOGIC
+    if (trade.trade === "LONG") {
+      if (priceMovementPercent > 0) {
+        // PROFIT
+        finalBalanceChange = pnl;
+        tradeUpdateData.profit = pnl;
+      } else {
+        // LOSS
+        finalBalanceChange = Math.max(pnl, 0);
+        tradeUpdateData.loss = pnl;
       }
     }
 
-    const asset = await prisma.asset.findFirst({
+    if (trade.trade === "SHORT") {
+      if (priceMovementPercent < 0) {
+        // PROFIT
+        finalBalanceChange = pnl;
+        tradeUpdateData.profit = pnl;
+      } else {
+        // LOSS
+        finalBalanceChange = Math.max(pnl, 0);
+        tradeUpdateData.loss = pnl;
+      }
+    }
+
+    // 6️⃣ FIND USDT ASSET
+    const usdtAsset = await prisma.asset.findFirst({
       where: {
         userId: user.id,
-        assetName: "BTC",
+        assetName: "USDT",
       },
     });
 
+    if (!usdtAsset) {
+      return NextResponse.json(
+        { error: "USDT wallet not found" },
+        { status: 404 }
+      );
+    }
+
+    // 7️⃣ UPDATE USDT BALANCE
     await prisma.asset.update({
-      where: { id: asset!.id },
-      data: assetUpdateData,
+      where: { id: usdtAsset.id },
+      data: {
+        amount: {
+          increment: finalBalanceChange,
+        },
+      },
     });
+    console.log(tradeUpdateData);
+    console.log("finalBalanceChange: ",finalBalanceChange);
+
+    // 8️⃣ UPDATE TRADE
     await prisma.futureTrade.update({
       where: { id: trade.id },
       data: tradeUpdateData,
     });
 
-    return NextResponse.json({ message: "Trade Ended" }, { status: 200 });
-  } catch (error) {
-    console.log(error);
-
     return NextResponse.json(
-      { error: "Interval server Error" },
+      { message: "Trade closed successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
