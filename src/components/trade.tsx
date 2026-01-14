@@ -1,18 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getUserAssets } from "../lib/queries";
-import { AiFillPlusCircle } from "react-icons/ai";
-import { useCurrentUser } from "../lib/hook";
 import { RiFileHistoryFill } from "react-icons/ri";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSnackbar } from "notistack";
 import Spot from "./spot";
 import Future from "./future";
-const TradePanel = ({ price }: { price: number }) => {
-  const [quantity, setQuantity] = useState<any>(1);
+const TradePanel = () => {
   const [tabs, setTabs] = useState<"SPOT" | "FUTURE">("SPOT");
 
   return (
@@ -34,7 +27,7 @@ const TradePanel = ({ price }: { price: number }) => {
         >
           SPOT
           {tabs == "SPOT" && (
-            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-[rgb(108,244,239)]"></div>
+            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-main"></div>
           )}
         </button>
         <button
@@ -45,7 +38,7 @@ const TradePanel = ({ price }: { price: number }) => {
         >
           FUTURE
           {tabs == "FUTURE" && (
-            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-[rgb(108,244,239)]"></div>
+            <div className="-bottom-1 left-1/2 -translate-x-1/2 absolute w-1/2 h-0.5 bg-main"></div>
           )}
         </button>
       </div>

@@ -2,15 +2,20 @@
 import moment from "moment";
 import { Prisma } from "@/app/generated/prisma/client";
 import { RiDeleteBin7Fill } from "react-icons/ri";
+import { getCurrentBtcPrice } from "../lib/getCurrentBtcPrice";
 export const OpenOrdersList = ({
   data,
 }: {
   data: (Prisma.FutureTradeModel & { growth: number })[];
 }) => {
   const handleCancelOrder = async (tradeId: string) => {
-    const res = await fetch(`/api/trade/future/end/${tradeId}`, {
-      method: "PUT",
-    });
+    const btcPrice = await getCurrentBtcPrice();
+    const res = await fetch(
+      `/api/trade/future/end/${tradeId}?btcPrice=${btcPrice}`,
+      {
+        method: "PUT",
+      }
+    );
   };
   return (
     <div>

@@ -90,8 +90,8 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+    <div className="min-h-screen bg-[rgb(12,14,17)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="bg-bg p-8 rounded-lg shadow-lg max-w-md w-full">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Create your trading account
@@ -100,7 +100,7 @@ export default function SignUp() {
             Already have an account?{" "}
             <Link
               href="/auth/signin"
-              className="font-medium text-blue-400 hover:text-blue-300"
+              className="font-medium text-main hover:text-[#56cdc9] transition-colors"
             >
               Sign in here
             </Link>
@@ -123,7 +123,7 @@ export default function SignUp() {
                 required
                 value={formData.username}
                 onChange={handleChange}
-                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 placeholder="Choose a username"
               />
             </div>
@@ -143,7 +143,7 @@ export default function SignUp() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 placeholder="Enter your email"
               />
             </div>
@@ -162,7 +162,7 @@ export default function SignUp() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 placeholder="Minimum 6 characters"
                 minLength={6}
               />
@@ -182,7 +182,7 @@ export default function SignUp() {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="relative block w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 placeholder="Confirm your password"
                 minLength={6}
               />
@@ -198,7 +198,7 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-main hover:bg-[#56cdc9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-main disabled:bg-[#2c6f6d] disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <div className="flex items-center">
@@ -214,11 +214,17 @@ export default function SignUp() {
           <div className="text-center">
             <p className="text-xs text-gray-400">
               By creating an account, you agree to our{" "}
-              <a href="#" className="text-blue-400 hover:text-blue-300">
+              <a
+                href="#"
+                className="text-main hover:text-[#56cdc9] transition-colors"
+              >
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-blue-400 hover:text-blue-300">
+              <a
+                href="#"
+                className="text-main hover:text-[#56cdc9] transition-colors"
+              >
                 Privacy Policy
               </a>
             </p>

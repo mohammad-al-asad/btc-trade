@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import LeverageRange from "./leverage-range";
-import { IoMdArrowDropdown } from "react-icons/io";
 import AvblAssets from "./avbl-assets";
 import { usePrice } from "../lib/store";
 import { useSnackbar } from "notistack";
@@ -10,14 +9,15 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserAssets } from "../lib/queries";
 import { useCurrentUser } from "../lib/hook";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 const Future = () => {
+  const { status } = useSession();
   const user = useCurrentUser();
   const { price: btcCurrentPrice } = usePrice((state) => state);
   const [tradeType, setTradeType] = useState<"MARKET" | "SPORT">("MARKET");
 
   const [leverage, setLeverage] = useState<number>(5);
   const [margin, setMargin] = useState<number>(1);
-  const [cost, setCost] = useState<number>(0);
   const { enqueueSnackbar } = useSnackbar();
   const btcPrice = usePrice((state) => state.price);
 
@@ -45,6 +45,7 @@ const Future = () => {
   const { data } = useQuery({
     queryKey: ["btc-price"],
     queryFn: getUserAssets,
+    enabled: status == "authenticated",
     refetchInterval: 1000,
   });
 

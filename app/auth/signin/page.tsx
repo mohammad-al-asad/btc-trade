@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -34,8 +34,8 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+    <div className="min-h-screen bg-[rgb(12,14,17)] flex items-center justify-center">
+      <div className="bg-bg p-8 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
           Sign In to Trading Platform
         </h2>
@@ -49,7 +49,7 @@ export default function SignIn() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-main"
               placeholder="demo@trading.com"
               required
             />
@@ -63,7 +63,7 @@ export default function SignIn() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-main"
               placeholder="demo123"
               required
             />
@@ -72,7 +72,7 @@ export default function SignIn() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            className="w-full bg-main hover:bg-[#56cdc9] disabled:bg-[#2c6f6d] text-black font-semibold py-2 px-4 rounded-lg duration-100 transition-colors"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
@@ -82,7 +82,7 @@ export default function SignIn() {
             Don&apos;t have an account?{" "}
             <Link
               href="/auth/signup"
-              className="font-medium text-blue-400 hover:text-blue-300"
+              className="font-medium text-main hover:text-[#56cdc9] transition-colors duration-100"
             >
               Sign up here
             </Link>

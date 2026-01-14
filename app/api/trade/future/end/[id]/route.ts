@@ -1,7 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/src/lib/prisma";
-import { getCurrentPrice, getCurrentUser } from "@/src/lib/utili";
-import { NodeNextResponse } from "next/dist/server/base-http/node";
+import { getCurrentUser } from "@/src/lib/utili";
 import { NextRequest, NextResponse } from "next/server";
 
 export const PUT = async (
@@ -29,8 +28,8 @@ export const PUT = async (
         { status: 404 }
       );
     }
-
-    const currentBTCPrice = await getCurrentPrice();
+    const { searchParams } = new URL(req.url);
+    const currentBTCPrice = Number(searchParams.get("btcPrice"));
 
     const assetUpdateData: Prisma.AssetUpdateInput = {};
     const tradeUpdateData: Prisma.FutureTradeUpdateInput = {};

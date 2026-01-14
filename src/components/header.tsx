@@ -11,46 +11,48 @@ import { IoLogOut } from "react-icons/io5";
 const Header = () => {
   const user = useCurrentUser();
   return (
-    <header className="flex items-center border-b border-b-gray-800 px-4 md:px-10 lg:px-16 justify-between py-4 md:py-3 ">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-3">
-        <Image
-          src={logo}
-          alt="Trading"
-          width={80}
-          className="w-[35px] md:w-[50px]"
-        />
-        <div className="text-main font-serif">
-          <h1 className="font-bold text-xl md:text-2xl">SORA</h1>
-          <p className="text-[9px] leading-2">The funded account</p>
-        </div>
-      </Link>
+    <header className="flex items-center border-b border-b-gray-800 justify-center py-4 md:py-3 ">
+      <div className="flex max-w-[1500px] items-center justify-between w-full px-5">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src={logo}
+            alt="Trading"
+            width={80}
+            className="w-[35px] md:w-[50px]"
+          />
+          <div className="text-main font-serif">
+            <h1 className="font-bold text-xl md:text-2xl">SORA</h1>
+            <p className="text-[9px] leading-2">The funded account</p>
+          </div>
+        </Link>
 
-      {/* User Actions */}
-      <div className="flex md:gap-2 lg:gap-4 items-center">
-        {user && (
-          <>
-            {/* Navigation */}
-            <nav className="flex items-center gap-3 md:gap-6 transition-all">
-              <Link
-                href="/pricing"
-                className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
-              >
-                <GiUpgrade className="w-[15px] h-[15px] hover:text-main" />
-                Plans
-              </Link>
-              <Link
-                href="/profile"
-                className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
-              >
-                <FaUser className="w-[13px] h-[13px] hover:text-main" />
-                Profile
-              </Link>
-            </nav>
-          </>
-        )}
-        {!user && <AuthButton />}
-        {user && <Logout />}
+        {/* User Actions */}
+        <div className="flex md:gap-2 lg:gap-4 items-center">
+          {user && (
+            <>
+              {/* Navigation */}
+              <nav className="flex items-center gap-3 md:gap-6 transition-all">
+                <Link
+                  href="/pricing"
+                  className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
+                >
+                  <GiUpgrade className="w-[15px] h-[15px] hover:text-main" />
+                  Plans
+                </Link>
+                <Link
+                  href="/profile"
+                  className="hover:text-main text-sm md:text-md font-medium transition-colors flex gap-2 justify-center items-center"
+                >
+                  <FaUser className="w-[13px] h-[13px] hover:text-main" />
+                  Profile
+                </Link>
+              </nav>
+            </>
+          )}
+          {!user && <AuthButton />}
+          {user && <Logout />}
+        </div>
       </div>
     </header>
   );
