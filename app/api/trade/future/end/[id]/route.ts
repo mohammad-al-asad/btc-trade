@@ -42,48 +42,37 @@ export const PUT = async (
       return NextResponse.json({ error: "Invalid BTC price" }, { status: 400 });
     }
 
-    // 4️⃣ CALCULATIONS (USDT-based)
+    // 4️⃣ BASIC VALUES (USDT-BASED)
     const entryPrice = Number(trade.entryUSDT);
     const margin = Number(trade.margin);
     const leverage = Number(trade.leverage);
 
-    const priceMovementPercent =
-      ((currentBTCPrice - entryPrice) / entryPrice) * 100;
+    // 5️⃣ PRICE CHANGE (MARKET DIRECTION)
+    const priceChange =
+      (currentBTCPrice - entryPrice) / entryPrice;
 
-    const pnl = (Math.abs(priceMovementPercent) * leverage * margin) / 100;
+    // 6️⃣ PNL (LONG BY DEFAULT)
+    let pnl = priceChange * leverage * margin;
 
-    let finalBalanceChange = 0;
+    // 7️⃣ INVERT FOR SHORT
+    if (trade.trade === "SHORT") {
+      pnl = -pnl;
+    }
 
+    // 8️⃣ PREPARE UPDATE DATA
     const tradeUpdateData: Prisma.FutureTradeUpdateInput = {
       status: "ENDED",
+      profit: 0,
+      loss: 0,
     };
 
-    // 5️⃣ LONG / SHORT LOGIC
-    if (trade.trade === "LONG") {
-      if (priceMovementPercent > 0) {
-        // PROFIT
-        finalBalanceChange = pnl;
-        tradeUpdateData.profit = pnl;
-      } else {
-        // LOSS
-        finalBalanceChange = Math.max(pnl, 0);
-        tradeUpdateData.loss = pnl;
-      }
+    if (pnl > 0) {
+      tradeUpdateData.profit = pnl;
+    } else if (pnl < 0) {
+      tradeUpdateData.loss = Math.abs(pnl);
     }
 
-    if (trade.trade === "SHORT") {
-      if (priceMovementPercent < 0) {
-        // PROFIT
-        finalBalanceChange = pnl;
-        tradeUpdateData.profit = pnl;
-      } else {
-        // LOSS
-        finalBalanceChange = Math.max(pnl, 0);
-        tradeUpdateData.loss = pnl;
-      }
-    }
-
-    // 6️⃣ FIND USDT ASSET
+    // 9️⃣ FIND USDT ASSET
     const usdtAsset = await prisma.asset.findFirst({
       where: {
         userId: user.id,
@@ -98,30 +87,31 @@ export const PUT = async (
       );
     }
 
-    // 7️⃣ UPDATE USDT BALANCE
+    // 🔟 UPDATE BALANCE (NEGATIVE pnl REDUCES BALANCE)
     await prisma.asset.update({
       where: { id: usdtAsset.id },
       data: {
         amount: {
-          increment: finalBalanceChange,
+          increment: pnl,
         },
       },
     });
-    console.log(tradeUpdateData);
-    console.log("finalBalanceChange: ",finalBalanceChange);
 
-    // 8️⃣ UPDATE TRADE
+    // 1️⃣1️⃣ UPDATE TRADE
     await prisma.futureTrade.update({
       where: { id: trade.id },
       data: tradeUpdateData,
     });
 
     return NextResponse.json(
-      { message: "Trade closed successfully" },
+      {
+        message: "Trade closed successfully",
+        pnl,
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
+    console.error("CLOSE TRADE ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
