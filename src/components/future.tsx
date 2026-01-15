@@ -10,6 +10,7 @@ import { getUserAssets } from "../lib/queries";
 import { useCurrentUser } from "../lib/hook";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+
 const Future = () => {
   const { status } = useSession();
   const user = useCurrentUser();
@@ -28,7 +29,7 @@ const Future = () => {
       method: "POST",
       body: JSON.stringify({
         leverage,
-        margin: margin,
+        margin,
         trade,
         btcCurrentPrice,
       }),
