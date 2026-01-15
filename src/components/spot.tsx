@@ -73,7 +73,7 @@ const Spot = () => {
       </div>
       {user && data?.payload?.usdt?.amount && (
         <AssetLabels
-          usdt={data.payload.usdt.amount}
+          usdt={(+data?.payload?.usdt?.amount).toFixed(2)}
           btc={(+data.payload.btc.amount).toFixed(20)}
         />
       )}
@@ -102,7 +102,7 @@ const Spot = () => {
 
 export default Spot;
 
-const AssetLabels = ({ usdt, btc }: { usdt: number; btc: string }) => {
+const AssetLabels = ({ usdt, btc }: { usdt: string; btc: string }) => {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
