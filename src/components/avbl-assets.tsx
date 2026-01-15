@@ -28,7 +28,7 @@ const AvblAssets = ({ hide = "NO" }: { hide?: "USDT" | "BTC" | "NO" }) => {
         <span className="text-xs text-gray-300">Avbl (USDT)</span>
         {/* <span>{data.payload.usdt}</span> */}
         <span className="text-xs text-white font-medium flex gap-1">
-          ${data?.payload?.usdt?.amount}
+          ${(+data?.payload?.usdt?.amount).toFixed(2)}
           <Link href="/deposit">
             <AiFillPlusCircle className="text-green-500" />
           </Link>
